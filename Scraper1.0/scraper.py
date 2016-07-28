@@ -158,6 +158,7 @@ class YahooSportsObj:
 		print(len(self.gameList))
 
 	#load the current score of all games of the day and compare to previous values
+	#Out of Date
 	def loadScoreboard(self):
 		page = requests.get('http://sports.yahoo.com/nhl/scoreboard/')
 		tree = html.fromstring(page.content);
