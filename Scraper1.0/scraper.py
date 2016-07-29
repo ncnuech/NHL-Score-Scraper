@@ -29,6 +29,7 @@ class Game:
 	#Boolean for whether game has ended True if ended
 	gameEnded = False;
 
+	#id used to identify a given game(most notibly used by ESPN.com)
 	gameId = 0;
 
 	#Constructor for a game, called once as "Game()"
@@ -87,18 +88,31 @@ class Buzzer:
 
 class ESPNSportsObj:
 
+	#List of Game Objects that hold  data on games on the current day
+	#Current day is currently Hardcoded
+	#TODO grab game on current date
 	gameList = []
 
 	def __init__(self):
+		#Retrieve the HTML for ESPN scoreboard
 		page = requests.get('http://espn.go.com/nhl/scoreboard?date=20160503')
 		tree = html.fromstring(page.content);
-		#find the urls of each game in the scoreboard. dissselect the recap headlines which are found similarly
+
+		#Retrieve ids for each game on the current day.
+		#An id is defined by ESPN as a unique numerical identifier for a given game
+		#id is used to more directly access elements of the XML using XPATH
 		idList = tree.xpath('//*[@id="content"]/*[@class="span-4"]/*/*/@id')
+		#remove two video related html elements
 		idList = idList[2:]
+		#remove text off the id to leave just numerical id
 		idList = [ x[:-8] for x in idList ]
 
+
+		#Add each game to the games list with initialized data
 		for id in idList:
+			#find the urls of each game in the scoreboard. dissselect the recap headlines which are found similarly
 			url = "http://espn.go.com" + str(tree.xpath('//*[@id="' + id +  '-gameLinks"]/a[1]/@href')[0])
+			#retrieve remaining game data( not currently using homeScore or awayScore as it should start at 0-0). 
 			homeScore = tree.xpath('//*[@id="' +  id +  '-homeHeaderScore"]/text()')[0]
 			awayScore = tree.xpath('//*[@id="' +  id +  '-awayHeaderScore"]/text()')[0]
 			homeTeam = tree.xpath('//*[@id="' +  id +  '-homeHeader"]/td[1]/div/a/text()')[0]
@@ -107,24 +121,36 @@ class ESPNSportsObj:
 			newGame = Game(awayTeam,homeTeam,url,id)
 			self.gameList.append(newGame)
 
+	#load the current score of all games of the day and compare to previous values
 	def loadScoreboard(self):
+		#Retreive HTML for ESPN Scoreboard
 		page = requests.get('http://espn.go.com/nhl/scoreboard?date=20160503')
 		tree = html.fromstring(page.content);
+
+		#For each game check score vs previous
 		for game in self.gameList:
 			homeScore = tree.xpath('//*[@id="' +  game.gameId +  '-homeHeaderScore"]/text()')[0]
 			awayScore = tree.xpath('//*[@id="' +  game.gameId +  '-awayHeaderScore"]/text()')[0]
 
+			#if score has changed, update score and send alert.
 			if  game.checkScore(int(awayScore),int(homeScore)):
 				print("score change recognized!")
 				#retrieve information about scoring play
 				self.loadGame(game)
+
+	#given game object for a game
+	#find teams playing, scores, and most recent scoring play
 	def loadGame(self, game):
+		#Retreive the boxscore HTML from ESPN for a game
 		page = requests.get(game.url)
 		tree = html.fromstring(page.content);
 
 		print(game.homeTeam + " " + str(game.homeScore) + " - " + game.awayTeam + " " + str(game.awayScore))
+		#Retreive list of scorers in order (not(@colspan) removes penalty plays)
 		playList =  tree.xpath('//*[@id="my-players-table"]/div[4]/div/table/*/*/td[3][not(@colspan)]/text()');
+		#Retreive list of assisters in order (0,1 or 2 can be given on a single line. 0 being unnasisted)
 		playList2 =  tree.xpath('//*[@id="my-players-table"]/div[4]/div/table/*/*/td[3]/i/text()');
+		#Concatonate last goal scorer and last assister and print this as the most recent scoring play
 		mostRecent = playList[-1] + playList2[-1]
 		print(mostRecent);
 
@@ -139,6 +165,8 @@ class YahooSportsObj:
 	#load the initial game data 
 	#using xpath, scrape and retrieve html text data from yahoo sports
 	#TODO grabs data from a specific date 
+	#Out of Date. First url list call should work others will fail
+	#to bring up to date i need to see a game that has already been played to see where the scores are placed in the hierarchy
 	def __init__(self):
 		page = requests.get('http://sports.yahoo.com/nhl/scoreboard/')
 		tree = html.fromstring(page.content);
@@ -206,12 +234,10 @@ def getNHLHeadlines():
 #Main driver for program, runs until shut down.
 def main():
 	#initialize list of games
-	#yahooSetupScoreboard()
-	#scoreboard = YahooSportsObj()
+
 	scoreboard = ESPNSportsObj()
 	while True:
 		#check each of the games for updated scores
-		#yahooScoreboard()
 		scoreboard.loadScoreboard()
 		##wait x seconds for next check
 		time.sleep(30)
