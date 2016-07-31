@@ -9,6 +9,7 @@ import time
 import threading
 import subprocess
 
+
 #Class Describing data for an individual game
 #Used to retrieve game data and check for score changes
 class Game:
@@ -21,12 +22,12 @@ class Game:
 	awayScore = 0
 	#Score of Home Team
 	homeScore = 0
-	#url to find details about the game including previous scoring play
 
+	#url to find details about the game including previous scoring play
 	url = ""
-	#Boolean for whether game has started True if started
+	#Boolean for whether game has started True if started (unimplemented)
 	gameStarted = False;
-	#Boolean for whether game has ended True if ended
+	#Boolean for whether game has ended True if ended (unimplemented)
 	gameEnded = False;
 
 	#id used to identify a given game(most notibly used by ESPN.com)
@@ -57,9 +58,11 @@ class Game:
 		if(newAwayScore != self.awayScore):
 			print("away score changed")
 			self.awayScore = newAwayScore
+			buzzerObj.startBuzzer(self.awayTeam)
 			return True
 		elif (newHomeScore != self.homeScore):
 			self.homeScore = newHomeScore
+			buzzerObj.startBuzzer(self.homeTeam)
 			print("home score changed")
 			return True
 		else:
@@ -73,17 +76,63 @@ class Game:
 #code is using vlc in specific location on device
 #call subprocess with vlc then shut down after x seconds
 class Buzzer:
-	def __init__(self,):		
-		threading.Timer(.1,self.startBuzzer).start()
 
-	def startBuzzer():
+	#Current dictionary to hold team name to location of mp3 file for buzzer
+	buzzerDict = {}
+
+
+	#hardcoded paths to mp3 files
+	#may make dict to teams and just use that in future
+	def setupBuzzerDict(self):
+		prefix = "BuzzerSounds/"
+		self.buzzerDict["Blackhawks"] = prefix + "chicago.mp3"
+		self.buzzerDict["Avalanche"] = prefix + "colorado.mp3"
+		self.buzzerDict["Stars"] = prefix + "dallas.mp3"
+		self.buzzerDict["Wild"] = prefix + "minnesota.mp3"
+		self.buzzerDict["Predators"] = prefix + "nashville.mp3"
+		self.buzzerDict["Blues"] = prefix + "stlouis.mp3"
+		self.buzzerDict["Jets"] = prefix + "winnepeg.mp3"
+		self.buzzerDict["Bruins"] = prefix + "boston.mp3"
+		self.buzzerDict["Sabres"] = prefix + "buffalo.mp3"
+		self.buzzerDict["Red Wings"] = prefix + "detroit.mp3"
+		self.buzzerDict["Panthers"] = prefix + "florida.mp3"
+		self.buzzerDict["Canadiens"] = prefix + "montreal.mp3"
+		self.buzzerDict["Senators"] = prefix + "ottawa.mp3"
+		self.buzzerDict["Lightning"] = prefix + "tampabay.mp3"
+		self.buzzerDict["Maple Leafs"] = prefix + "toronto.mp3"
+		self.buzzerDict["Ducks"] = prefix + "anaheim.mp3"
+		self.buzzerDict["Coyotes"] = prefix + "arizona.mp3"
+		self.buzzerDict["Flames"] = prefix + "calgary.mp3"
+		self.buzzerDict["Oilers"] = prefix + "edmonton.mp3"
+		self.buzzerDict["Kings"] = prefix + "losangeles.mp3"
+		self.buzzerDict["Sharks"] = prefix + "sanjose.mp3"
+		self.buzzerDict["Canucks"] = prefix + "vancouver.mp3"
+		self.buzzerDict["Hurricanes"] = prefix + "carolina.mp3"
+		self.buzzerDict["Blue Jackets"] = prefix + "columbus.mp3"
+		self.buzzerDict["Devils"] = prefix + "newjersey.mp3"
+		self.buzzerDict["Islanders"] = prefix + "newyorkislanders.mp3"
+		self.buzzerDict["Rangers"] = prefix + "newyorkrangers.mp3"
+		self.buzzerDict["Flyers"] = prefix + "philadelphia.mp3"
+		self.buzzerDict["Penguins"] = prefix + "pittsburgh.mp3"
+		self.buzzerDict["Capitals"] = prefix + "washington.mp3"
+
+	#starts the buzzer when a specific team scores. must call with team name
+	#uses vlc player right now. will have to work if go to rPI
+	#currently 10 seconds to end buzzer
+	#buzzers will play on top of each other
+	def startBuzzer(self,teamName):
 		sound_player = "C:/Program Files (x86)/VideoLAN/VLC/vlc.exe"
-		sound_file = "BuzzerSounds/arizona.mp3"
+		sound_file = self.buzzerDict[teamName]
 		music_player_subprocess = subprocess.Popen([sound_player,sound_file])
 		threading.Timer(10.0,self.endBuzzer,[music_player_subprocess]).start()
 
-	def endBuzzer(music_player_subprocess):
+	#call to end buzzer
+	def endBuzzer(self,music_player_subprocess):
 		os.kill(music_player_subprocess.pid, signal.SIGINT)
+
+	def __init__(self):		
+		#threading.Timer(.1,self.startBuzzer).start()
+		self.setupBuzzerDict()
 ###############################################
 
 class ESPNSportsObj:
@@ -231,11 +280,15 @@ def getNHLHeadlines():
 	headlines = tree.xpath('//*[@id="content-wrap"]/div/div[3]/div[2]/section[1]/ul/*/a/text()')
 	print(headlines)
 
+buzzerObj = Buzzer()
+
+
 #Main driver for program, runs until shut down.
 def main():
 	#initialize list of games
 
 	scoreboard = ESPNSportsObj()
+
 	while True:
 		#check each of the games for updated scores
 		scoreboard.loadScoreboard()
