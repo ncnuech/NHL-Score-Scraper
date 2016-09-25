@@ -11,7 +11,6 @@ import subprocess
 import time
 import datetime
 
-import mlb
 
 #Class Describing data for an individual game
 #Used to retrieve game data and check for score changes
@@ -145,14 +144,6 @@ class ESPNSportsObj:
 	#TODO grab game on current date
 	gameList = []
 
-	def getDateStr():
-		dateStr = time.strftime("%Y%m%d") #oes this work for single digit days?
-		dateStr="20160503"
-		curTime = time.strftime("%H")
-		if int(curTime)<7:
-			dateStr=str(int(dateStr)-1)
-		return dateStr
-
 	def __init__(self):
 		#Retrieve the HTML for ESPN scoreboard
 		dateStr = getDateStr()
@@ -191,7 +182,11 @@ class ESPNSportsObj:
 
 		#For each game check score vs previous
 		for game in self.gameList:
+			
 			homeScore = tree.xpath('//*[@id="' +  game.gameId +  '-homeHeaderScore"]/text()')[0]
+			if homeScore=='\xa0':
+				print("game has not started")
+				continue
 			awayScore = tree.xpath('//*[@id="' +  game.gameId +  '-awayHeaderScore"]/text()')[0]
 
 			#if score has changed, update score and send alert.
@@ -226,6 +221,13 @@ def getNHLHeadlines():
 
 buzzerObj = Buzzer()
 
+def getDateStr():
+	dateStr = time.strftime("%Y%m%d") #oes this work for single digit days?
+	#dateStr="20160503"
+	curTime = time.strftime("%H")
+	if int(curTime)<7:
+		dateStr=str(int(dateStr)-1)
+	return dateStr
 
 #Main driver for program, runs until shut down.
 def main():
