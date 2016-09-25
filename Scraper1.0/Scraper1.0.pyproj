@@ -27,6 +27,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="mlb.py" />
     <Compile Include="scraper.py">
       <SubType>Code</SubType>
     </Compile>

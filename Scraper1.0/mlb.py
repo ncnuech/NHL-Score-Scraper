@@ -8,10 +8,6 @@ import time
 
 import threading
 import subprocess
-import time
-import datetime
-
-import mlb
 
 #Class Describing data for an individual game
 #Used to retrieve game data and check for score changes
@@ -28,10 +24,6 @@ class Game:
 
 	#url to find details about the game including previous scoring play
 	url = ""
-	#Boolean for whether game has started True if started (unimplemented)
-	gameStarted = False;
-	#Boolean for whether game has ended True if ended (unimplemented)
-	gameEnded = False;
 
 	#id used to identify a given game(most notibly used by ESPN.com)
 	gameId = 0;
@@ -137,7 +129,6 @@ class Buzzer:
 		#threading.Timer(.1,self.startBuzzer).start()
 		self.setupBuzzerDict()
 ###############################################
-
 class ESPNSportsObj:
 
 	#List of Game Objects that hold  data on games on the current day
@@ -145,32 +136,18 @@ class ESPNSportsObj:
 	#TODO grab game on current date
 	gameList = []
 
-	def getDateStr():
-		dateStr = time.strftime("%Y%m%d") #oes this work for single digit days?
-		dateStr="20160503"
-		curTime = time.strftime("%H")
-		if int(curTime)<7:
-			dateStr=str(int(dateStr)-1)
-		return dateStr
-
 	def __init__(self):
 		#Retrieve the HTML for ESPN scoreboard
-		dateStr = getDateStr()
-		page = requests.get('http://espn.go.com/nhl/scoreboard?date='+dateStr)
+		page = requests.get('http://www.foxsports.com/college-football/scores?season=2015&seasonType=1&week=1&group=0')
 		tree = html.fromstring(page.content);
 
 		#Retrieve ids for each game on the current day.
 		#An id is defined by ESPN as a unique numerical identifier for a given game
 		#id is used to more directly access elements of the XML using XPATH
-		idList = tree.xpath('//*[@id="content"]/*[@class="span-4"]/*/*/@id')
-		#remove two video related html elements
-		idList = idList[2:]
-		#remove text off the id to leave just numerical id
-		idList = [ x[:-8] for x in idList ]
-
+		urlList = tree.xpath('//*[@id="wisbb_scoresContainer"]/div[1]/section[1]/footer/a[2]/@href')
 
 		#Add each game to the games list with initialized data
-		for id in idList:
+		for url in urlList:
 			#find the urls of each game in the scoreboard. dissselect the recap headlines which are found similarly
 			url = "http://espn.go.com" + str(tree.xpath('//*[@id="' + id +  '-gameLinks"]/a[1]/@href')[0])
 			#retrieve remaining game data( not currently using homeScore or awayScore as it should start at 0-0). 
@@ -185,8 +162,7 @@ class ESPNSportsObj:
 	#load the current score of all games of the day and compare to previous values
 	def loadScoreboard(self):
 		#Retreive HTML for ESPN Scoreboard
-		dateStr = getDateStr()
-		page = requests.get('http://espn.go.com/nhl/scoreboard?date='+dateStr)
+		page = requests.get('http://espn.go.com/nhl/scoreboard?date=20160503')
 		tree = html.fromstring(page.content);
 
 		#For each game check score vs previous
@@ -217,82 +193,6 @@ class ESPNSportsObj:
 		print(mostRecent);
 
 
-#Out of date!. Yahoo changed scoreboard site. Boxscores should still work
-class YahooSportsObj:
-
-	scoreboardGamePanelURL = '//*[@id="mediasportsscoreboardgrandslam"]/*/*/*/*'
-
-	gameList = []
-
-	#load the initial game data 
-	#using xpath, scrape and retrieve html text data from yahoo sports
-	#TODO grabs data from a specific date 
-	#Out of Date. First url list call should work others will fail
-	#to bring up to date i need to see a game that has already been played to see where the scores are placed in the hierarchy
-	def __init__(self):
-		page = requests.get('http://sports.yahoo.com/nhl/scoreboard/')
-		tree = html.fromstring(page.content);
-		#to describe the first xpath function we are retriving anything xml tag with the id "mediasports..." 
-		#then through the hierarchy, anything->anything->anything->anything and then return the value of the attribute data-url at that point
-		urlList = tree.xpath('//*[@id="scoreboard-group-2"]/div/ul/*/div/div/a/@href')
-		scores = tree.xpath('//*[@id="mediasportsscoreboardgrandslam"]/*/*/*/*/td[@class="score"]/*/*/*/text()')
-		aways = tree.xpath('//*[@id="mediasportsscoreboardgrandslam"]/*/*/*/*/td[@class="away"]/*/em/text()')
-		homes = tree.xpath('//*[@id="mediasportsscoreboardgrandslam"]/*/*/*/*/td[@class="home"]/*/em/text()')
-		#iterate through each game initializing game objects and adding them to global gameList
-		for i in range(len(aways)): 
-			print("here")
-			fullUrl = "http://sports.yahoo.com" + urlList[i];
-			newGame = Game(aways[i],homes[i],fullUrl)
-			self.gameList.append(newGame)
-
-		print(len(self.gameList))
-
-	#load the current score of all games of the day and compare to previous values
-	#Out of Date
-	def loadScoreboard(self):
-		page = requests.get('http://sports.yahoo.com/nhl/scoreboard/')
-		tree = html.fromstring(page.content);
-		#scores --- scores of all games of the day in away,home,away,home order
-		scores = tree.xpath('//*[@id="mediasportsscoreboardgrandslam"]/*/*/*/*/td[@class="score"]/*/*/*/text()')
-		#index moves by two through scores(one game at a time)
-		index = 0
-		print("gogogo")
-		#loop through all games from the day
-		for game in self.gameList:
-			#check if game score has changed from saved values
-			print("here")
-			if  game.checkScore(int(scores[index]),int(scores[index+1])):
-				print("score change recognized!")
-				#retrieve information about scoring play
-				self.loadGame(game.url)
-			index += 2
-
-	#given a url for a game
-	#find teams playing, scores, and most recent scoring play
-	def loadGame(self, boxscoreLink):
-		page = requests.get(boxscoreLink)
-		tree = html.fromstring(page.content);
-
-		teams = tree.xpath('//*[@id="Col1-0-Boxscore"]/div[1]/div[3]/div/div/div[1]/div/div[2]/div[1]/a/span/text()')
-		teams += tree.xpath('//*[@id="Col1-0-Boxscore"]/div[1]/div[3]/div/div/div[2]/div/div[2]/div[1]/a/span/text()')
-		print('Teams: ' + str(teams))
-
-		scores = tree.xpath('//*[@id="Col1-0-Boxscore"]/div[1]/div[3]/div/div/div[1]/div/span/text()')
-		scores += tree.xpath('//*[@id="Col1-0-Boxscore"]/div[1]/div[3]/div/div/div[2]/div/span/text()')
-		print('Scores: ' + str(scores))
-
-		playList =  tree.xpath('//*[@id="Col1-0-Boxscore"]/div[4]/div[2]/*/table/tbody/*/td[3]/text()');
-		mostRecent = playList[-1]
-		print(mostRecent);
-
-
-#retrive the headlines from NHL.com
-def getNHLHeadlines():
-	page = requests.get("https://www.nhl.com/")
-	tree = html.fromstring(page.content);
-	headlines = tree.xpath('//*[@id="content-wrap"]/div/div[3]/div[2]/section[1]/ul/*/a/text()')
-	print(headlines)
-
 buzzerObj = Buzzer()
 
 
@@ -311,7 +211,3 @@ def main():
 	print("ending")
 
 
-
-if __name__ == '__main__':
-	print("starting")
-	main();
