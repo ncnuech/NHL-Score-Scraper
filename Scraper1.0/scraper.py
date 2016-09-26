@@ -11,6 +11,21 @@ import subprocess
 import time
 import datetime
 
+import logging
+
+class Printer:
+	def __init__(self):
+		return
+
+	def printToBoard(self,outStr):
+		print("\n")
+		print(outStr)
+		print("\n")
+
+
+	def debugPrint(self,outStr):
+		print("\tdebug:\t"+outStr)
+
 
 #Class Describing data for an individual game
 #Used to retrieve game data and check for score changes
@@ -42,13 +57,13 @@ class Game:
 	#_homeTeam --- name of home team
 	#_url --- url for further game details
 	def __init__(self,_awayTeam,_homeTeam,_url):
-		print("running init on game")
+		printerObj.debugPrint("running init on game")
 		self.awayTeam = _awayTeam
 		self.homeTeam = _homeTeam
 		self.url = _url
 
 	def __init__(self,_awayTeam,_homeTeam,_url,_gameId):
-		print("running init on game")
+		printerObj.debugPrint("running init on game")
 		self.awayTeam = _awayTeam
 		self.homeTeam = _homeTeam
 		self.url = _url
@@ -60,17 +75,17 @@ class Game:
 	#newHomeScore --- newest home team score to compare
 	def checkScore(self,newAwayScore,newHomeScore):
 		if(newAwayScore != self.awayScore):
-			print("away score changed")
+			printerObj.debugPrint("away score changed")
 			self.awayScore = newAwayScore
 			buzzerObj.startBuzzer(self.awayTeam)
 			return True
 		elif (newHomeScore != self.homeScore):
 			self.homeScore = newHomeScore
 			buzzerObj.startBuzzer(self.homeTeam)
-			print("home score changed")
+			printerObj.debugPrint("home score changed")
 			return True
 		else:
-			print("no score change")
+			printerObj.debugPrint("no score change")
 			return False
 
 class League:
@@ -188,20 +203,20 @@ class ESPNSportsObj:
 			awayScore = tree.xpath('//*[@id="' +  game.gameId +  '-awayHeaderScore"]/text()')[0]
 			game.gameStatusStr=tree.xpath('//*[@id="'+ game.gameId + '-statusLine1"]/text()')[0]
 			if (homeScore=='\xa0'):
-				print("game has not started")
+				printerObj.debugPrint("game has not started")
 				continue
 			elif (not game.gameStarted):
-				print("Game Just Started")
+				printerObj.debugPrint("Game Just Started")
 				game.gameStarted=True
 			elif (not game.gameEnded and (game.gameStatusStr=='Final' or game.gameStatusStr=='Final/OT')):
-				print("Game Just Ended")
+				printerObj.debugPrint("Game Just Ended")
 				game.gameEnded = True
 				self.loadGame(game)
 				continue
 
 			#if score has changed, update score and send alert.
 			if  game.checkScore(int(awayScore),int(homeScore)):
-				print("score change recognized!")
+				printerObj.debugPrint("score change recognized!")
 				#retrieve information about scoring play
 				self.loadGame(game)
 
@@ -213,27 +228,28 @@ class ESPNSportsObj:
 		tree = html.fromstring(page.content);
 		outputString = leagueObj.teamDict[game.homeTeam]['abbr'] + " " + str(game.homeScore) + " - " + leagueObj.teamDict[game.awayTeam]['abbr'] + " " + str(game.awayScore)
 		if (not game.gameEnded):
-			#Retreive list of scorers in order (not(@colspan) removes penalty plays)
-			playList =  tree.xpath('//*[@id="my-players-table"]/div[3]/div/table/*/*/td[3][not(@colspan)]/text()');
+			#Retreive list of scorers in order (not(@colspan) removes penalty plays) //which div
+			playList =  tree.xpath('//*[@id="my-players-table"]/*/div/table/*/*/td[3][not(@colspan)]/text()');
 			#Retreive list of assisters in order (0,1 or 2 can be given on a single line. 0 being unnasisted)
-			playList2 =  tree.xpath('//*[@id="my-players-table"]/div[3]/div/table/*/*/td[3]/i/text()');
+			playList2 =  tree.xpath('//*[@id="my-players-table"]/*/div/table/*/*/td[3]/i/text()');
 			#Concatonate last goal scorer and last assister and print this as the most recent scoring play
-			mostRecent = " " + playList[-1] + playList2[-1]
-			outputString+=mostRecent
-			print(mostRecent);
+			if (playList):
+				mostRecent = " " + playList[-1] + playList2[-1]
+				outputString+=mostRecent
 		else:
 			outputString+=" " + game.gameStatusStr	
-		print(outputString)
+		printerObj.printToBoard(outputString)
 
 #retrive the headlines from NHL.com
 def getNHLHeadlines():
 	page = requests.get("https://www.nhl.com/")
 	tree = html.fromstring(page.content);
 	headlines = tree.xpath('//*[@id="content-wrap"]/div/div[3]/div[2]/section[1]/ul/*/a/text()')
-	print(headlines)
+	printerObj.printToBoard(headlines)
 
 buzzerObj = Buzzer()
 leagueObj = League()
+printerObj = Printer()
 def getDateStr():
 	dateStr = time.strftime("%Y%m%d") #oes this work for single digit days?
 	#dateStr="20160503"
@@ -253,11 +269,10 @@ def main():
 		scoreboard.loadScoreboard()
 		##wait x seconds for next check
 		time.sleep(30)
-		print("looping")
-	print("ending")
+		printerObj.debugPrint("looping")
+	printerObj.debugPrint("ending")
 
 
 
 if __name__ == '__main__':
-	print("starting")
 	main();
