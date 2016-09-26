@@ -74,19 +74,20 @@ class Game:
 	#newAwayScore --- newest away team score to compare
 	#newHomeScore --- newest home team score to compare
 	def checkScore(self,newAwayScore,newHomeScore):
+		changed=False
 		if(newAwayScore != self.awayScore):
 			printerObj.debugPrint("away score changed")
 			self.awayScore = newAwayScore
 			buzzerObj.startBuzzer(self.awayTeam)
-			return True
-		elif (newHomeScore != self.homeScore):
+			changed=True
+		if (newHomeScore != self.homeScore):
 			self.homeScore = newHomeScore
 			buzzerObj.startBuzzer(self.homeTeam)
 			printerObj.debugPrint("home score changed")
-			return True
-		else:
-			printerObj.debugPrint("no score change")
-			return False
+			changed=True
+
+		printerObj.debugPrint("no score change")
+		return changed
 
 class League:
 
@@ -162,6 +163,10 @@ class ESPNSportsObj:
 	gameList = []
 
 	def __init__(self):
+		self.startDay()
+
+	def startDay(self):
+		self.gameList = []
 		#Retrieve the HTML for ESPN scoreboard
 		page = requests.get('http://espn.go.com/nhl/scoreboard?date='+getDateStr())
 		tree = html.fromstring(page.content);
@@ -263,13 +268,20 @@ def main():
 	#initialize list of games
 
 	scoreboard = ESPNSportsObj()
-
+	loadedDay=True
+	delay=30
 	while True:
 		#check each of the games for updated scores
 		scoreboard.loadScoreboard()
 		##wait x seconds for next check
-		time.sleep(30)
+		time.sleep(delay)
 		printerObj.debugPrint("looping")
+		if time.strftime("%H")==3:
+			delay=60*60
+		elif time.strftime("%H")==9:
+			scoreboard.startDay()
+		elif time.strftime("%H")==11:
+			delay=30
 	printerObj.debugPrint("ending")
 
 
