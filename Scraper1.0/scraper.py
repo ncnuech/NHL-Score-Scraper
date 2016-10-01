@@ -52,6 +52,8 @@ class Game:
 	#string for type of game status used for end game right now
 	gameStatusStr = "";
 
+	gameTime=""
+
 	#id used to identify a given game(most notibly used by ESPN.com)
 	gameId = 0;
 
@@ -81,12 +83,12 @@ class Game:
 		if(newAwayScore != self.awayScore):
 			printerObj.debugPrint("away score changed")
 			self.awayScore = newAwayScore
-			buzzerObj.startBuzzer(self.awayTeam)
+			#buzzerObj.startBuzzer(self.awayTeam)
 			changed=1
 			
 		if (newHomeScore != self.homeScore):
 			self.homeScore = newHomeScore
-			buzzerObj.startBuzzer(self.homeTeam)
+			#buzzerObj.startBuzzer(self.homeTeam)
 			printerObj.debugPrint("home score changed")
 			changed=2
 			
@@ -203,6 +205,20 @@ class ESPNSportsObj:
 			newGame = Game(awayTeam,homeTeam,url,id)
 			self.gameList.append(newGame)
 
+	def printableGameList(self):
+		leagueStr = ""
+		for game in self.gameList:
+			gameStr=""
+			if not game.gameStarted:
+				gameStr+=game.awayTeam + " vs " + game.homeTeam + " " + game.gameTime
+			elif not game.gameEnded:
+				gameStr+=game.homeTeam + " " + str(game.homeScore) + " " + game.awayTeam + " " + str(game.awayScore)
+			else:
+				gameStr+=game.homeTeam + " " + str(game.homeScore) + " " + game.awayTeam + " " +  str(game.awayScore) +" " + game.gameStatusStr
+			gameStr+="   ";
+			leagueStr+=gameStr
+		return leagueStr
+					
 	#load the current score of all games of the day and compare to previous values
 	def loadScoreboard(self):
 		#Retreive HTML for ESPN Scoreboard
@@ -210,6 +226,7 @@ class ESPNSportsObj:
 		tree = html.fromstring(page.content);
 
 		#For each game check score vs previous as well as game status
+		gameHasChanged=False
 		for game in self.gameList:
 			if (game.gameEnded):
 			    continue
@@ -219,6 +236,7 @@ class ESPNSportsObj:
 			#homeScore = homeScore.encode("utf-8")
 			if (not homeScore[0].isdigit()):#\xa0
 				printerObj.debugPrint("game has not started")
+				game.gameTime = tree.xpath('//*[@id="' +  game.gameId +  '-statusLine2Left"]/text()')[0]
 				continue
 			elif (not game.gameStarted):
 				printerObj.debugPrint("Game Just Started")
@@ -232,9 +250,11 @@ class ESPNSportsObj:
 			scoringTeam = game.checkScore(int(awayScore),int(homeScore))
 			if scoringTeam:
 				printerObj.debugPrint("score change recognized!")
+				gameHasChanged=True
 				#retrieve information about scoring play
 				self.loadGame(game,game.getScoringTeamName(scoringTeam))
-
+		if not gameHasChanged:
+			printerObj.printToBoard(self.printableGameList())
 	#given game object for a game
 	#find teams playing, scores, and most recent scoring play
 	def loadGame(self, game,scoringTeamName):
