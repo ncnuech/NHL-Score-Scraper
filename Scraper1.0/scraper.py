@@ -83,12 +83,12 @@ class Game:
 		if(newAwayScore != self.awayScore):
 			printerObj.debugPrint("away score changed")
 			self.awayScore = newAwayScore
-			#buzzerObj.startBuzzer(self.awayTeam)
+			buzzerObj.startBuzzer(self.awayTeam)
 			changed=1
 			
 		if (newHomeScore != self.homeScore):
 			self.homeScore = newHomeScore
-			#buzzerObj.startBuzzer(self.homeTeam)
+			buzzerObj.startBuzzer(self.homeTeam)
 			printerObj.debugPrint("home score changed")
 			changed=2
 			
