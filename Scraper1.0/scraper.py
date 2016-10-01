@@ -14,6 +14,9 @@ import datetime
 import logging
 
 class Printer:
+
+	prefix=""
+
 	def __init__(self):
 		return
 
@@ -74,20 +77,26 @@ class Game:
 	#newAwayScore --- newest away team score to compare
 	#newHomeScore --- newest home team score to compare
 	def checkScore(self,newAwayScore,newHomeScore):
-		changed=False
+		changed=0
 		if(newAwayScore != self.awayScore):
 			printerObj.debugPrint("away score changed")
 			self.awayScore = newAwayScore
 			buzzerObj.startBuzzer(self.awayTeam)
-			changed=True
+			changed=1
+			
 		if (newHomeScore != self.homeScore):
 			self.homeScore = newHomeScore
 			buzzerObj.startBuzzer(self.homeTeam)
 			printerObj.debugPrint("home score changed")
-			changed=True
+			changed=2
+			
 
 		printerObj.debugPrint("no score change")
 		return changed
+	def getScoringTeamName(self,scoringTeam):
+		if (scoringTeam==1):
+			return self.awayTeam
+		return self.homeTeam
 
 class League:
 
@@ -216,29 +225,32 @@ class ESPNSportsObj:
 			elif (not game.gameEnded and (game.gameStatusStr=='Final' or game.gameStatusStr=='Final/OT')):
 				printerObj.debugPrint("Game Just Ended")
 				game.gameEnded = True
-				self.loadGame(game)
+				self.loadGame(game,"")
 				continue
 
 			#if score has changed, update score and send alert.
-			if  game.checkScore(int(awayScore),int(homeScore)):
+			scoringTeam = game.checkScore(int(awayScore),int(homeScore))
+			if scoringTeam:
 				printerObj.debugPrint("score change recognized!")
 				#retrieve information about scoring play
-				self.loadGame(game)
+				self.loadGame(game,game.getScoringTeamName(scoringTeam))
 
 	#given game object for a game
 	#find teams playing, scores, and most recent scoring play
-	def loadGame(self, game):
+	def loadGame(self, game,scoringTeamName):
 		#Retreive the boxscore HTML from ESPN for a game
 		page = requests.get(game.url)
 		tree = html.fromstring(page.content);
-		outputString = leagueObj.teamDict[game.homeTeam]['abbr'] + " " + str(game.homeScore) + " - " + leagueObj.teamDict[game.awayTeam]['abbr'] + " " + str(game.awayScore)
+		outputString = leagueObj.teamDict[game.homeTeam]['abbr'] + " " + str(game.homeScore) + " - " + leagueObj.teamDict[game.awayTeam]['abbr'] + " " + str(game.awayScore) 
+
 		if (not game.gameEnded):
+			outputString+= " " + scoringTeamName + " Goal! "
 			#Retreive list of scorers in order (not(@colspan) removes penalty plays) //which div
 			playList =  tree.xpath('//*[@id="my-players-table"]/*/div/table/*/*/td[3][not(@colspan)]/text()');
 			#Retreive list of assisters in order (0,1 or 2 can be given on a single line. 0 being unnasisted)
 			playList2 =  tree.xpath('//*[@id="my-players-table"]/*/div/table/*/*/td[3]/i/text()');
 			#Concatonate last goal scorer and last assister and print this as the most recent scoring play
-			if (playList):
+			if (playList and playList2):
 				mostRecent = " " + playList[-1] + playList2[-1]
 				outputString+=mostRecent
 		else:
@@ -269,7 +281,7 @@ def main():
 
 	scoreboard = ESPNSportsObj()
 	loadedDay=True
-	delay=30
+	delay=10
 	while True:
 		#check each of the games for updated scores
 		scoreboard.loadScoreboard()
@@ -281,7 +293,7 @@ def main():
 		elif time.strftime("%H")==9:
 			scoreboard.startDay()
 		elif time.strftime("%H")==11:
-			delay=30
+			delay=10
 	printerObj.debugPrint("ending")
 
 
