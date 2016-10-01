@@ -151,7 +151,7 @@ class Buzzer:
 	#currently 10 seconds to end buzzer
 	#buzzers will play on top of each other
 	def startBuzzer(self,teamName):
-		sound_player = "C:/Program Files (x86)/VideoLAN/VLC/vlc.exe"
+		sound_player = "/usr/bin/cvlc"
 		sound_file = leagueObj.teamDict[teamName]['buzzerFile']
 		music_player_subprocess = subprocess.Popen([sound_player,sound_file])
 		threading.Timer(10.0,self.endBuzzer,[music_player_subprocess]).start()
@@ -216,7 +216,8 @@ class ESPNSportsObj:
 			homeScore = tree.xpath('//*[@id="' +  game.gameId +  '-homeHeaderScore"]/text()')[0]
 			awayScore = tree.xpath('//*[@id="' +  game.gameId +  '-awayHeaderScore"]/text()')[0]
 			game.gameStatusStr=tree.xpath('//*[@id="'+ game.gameId + '-statusLine1"]/text()')[0]
-			if (homeScore=='\xa0'):
+			#homeScore = homeScore.encode("utf-8")
+			if (not homeScore[0].isdigit()):#\xa0
 				printerObj.debugPrint("game has not started")
 				continue
 			elif (not game.gameStarted):
@@ -227,7 +228,6 @@ class ESPNSportsObj:
 				game.gameEnded = True
 				self.loadGame(game,"")
 				continue
-
 			#if score has changed, update score and send alert.
 			scoringTeam = game.checkScore(int(awayScore),int(homeScore))
 			if scoringTeam:
