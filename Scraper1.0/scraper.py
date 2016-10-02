@@ -15,14 +15,19 @@ import logging
 
 class Printer:
 
-	prefix=""
+	#prefix="http://10.177.105.74:81/text/"
+	prefix="http://10.177.105.137/arduino/ledText2/"
+	color="G"
+	brightness="7"
 
+	#Color Then 0-9
 	def __init__(self):
 		return
 
 	def printToBoard(self,outStr):
 		print("\n")
 		print(outStr)
+		rval = requests.get(self.prefix + self.color+self.brightness+outStr)
 		print("\n")
 
 
@@ -83,12 +88,12 @@ class Game:
 		if(newAwayScore != self.awayScore):
 			printerObj.debugPrint("away score changed")
 			self.awayScore = newAwayScore
-			buzzerObj.startBuzzer(self.awayTeam)
+			#buzzerObj.startBuzzer(self.awayTeam)
 			changed=1
 			
 		if (newHomeScore != self.homeScore):
 			self.homeScore = newHomeScore
-			buzzerObj.startBuzzer(self.homeTeam)
+			#buzzerObj.startBuzzer(self.homeTeam)
 			printerObj.debugPrint("home score changed")
 			changed=2
 			
@@ -205,16 +210,17 @@ class ESPNSportsObj:
 			newGame = Game(awayTeam,homeTeam,url,id)
 			self.gameList.append(newGame)
 
+	#loops through games on a given day. Prints out info depending on if game is past,current or upcomming
 	def printableGameList(self):
 		leagueStr = ""
 		for game in self.gameList:
 			gameStr=""
 			if not game.gameStarted:
-				gameStr+=game.awayTeam + " vs " + game.homeTeam + " " + game.gameTime
+				gameStr+=leagueObj.teamDict[game.homeTeam]['abbr'] + " vs " + leagueObj.teamDict[game.awayTeam]['abbr'] + " " + game.gameTime
 			elif not game.gameEnded:
-				gameStr+=game.homeTeam + " " + str(game.homeScore) + " " + game.awayTeam + " " + str(game.awayScore)
+				gameStr+=leagueObj.teamDict[game.homeTeam]['abbr']+ " " + str(game.homeScore) + " - " + leagueObj.teamDict[game.awayTeam]['abbr'] + " " + str(game.awayScore)
 			else:
-				gameStr+=game.homeTeam + " " + str(game.homeScore) + " " + game.awayTeam + " " +  str(game.awayScore) +" " + game.gameStatusStr
+				gameStr+=leagueObj.teamDict[game.homeTeam]['abbr'] + " " + str(game.homeScore) + " - " + leagueObj.teamDict[game.awayTeam]['abbr'] + " " +  str(game.awayScore) +" " + game.gameStatusStr
 			gameStr+="   ";
 			leagueStr+=gameStr
 		return leagueStr
@@ -264,7 +270,7 @@ class ESPNSportsObj:
 		outputString = leagueObj.teamDict[game.homeTeam]['abbr'] + " " + str(game.homeScore) + " - " + leagueObj.teamDict[game.awayTeam]['abbr'] + " " + str(game.awayScore) 
 
 		if (not game.gameEnded):
-			outputString+= " " + scoringTeamName + " Goal! "
+			outputString+= " " + leagueObj.teamDict[scoringTeamName]['abbr'] + " Goal! "
 			#Retreive list of scorers in order (not(@colspan) removes penalty plays) //which div
 			playList =  tree.xpath('//*[@id="my-players-table"]/*/div/table/*/*/td[3][not(@colspan)]/text()');
 			#Retreive list of assisters in order (0,1 or 2 can be given on a single line. 0 being unnasisted)
@@ -318,5 +324,12 @@ def main():
 
 
 
+def testBoardCommunication():
+	prefix="http://10.177.105.74:81/text/"
+	prefix="http://10.177.105.137/arduino/ledText2/"
+	rval = requests.get(prefix+"G9hello world!")
+	print(rval)
+
 if __name__ == '__main__':
+	#testBoardCommunication()
 	main();
