@@ -164,6 +164,7 @@ class Buzzer:
 		else:
 			sound_player = "/usr/bin/cvlc"
 		sound_file = leagueObj.teamDict[teamName]['buzzerFile']
+		print("file" + sound_file)
 		music_player_subprocess = subprocess.Popen([sound_player,sound_file])
 		threading.Timer(10.0,self.endBuzzer,[music_player_subprocess]).start()
 
