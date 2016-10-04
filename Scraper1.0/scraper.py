@@ -271,7 +271,7 @@ class ESPNSportsObj:
 		#Retreive the boxscore HTML from ESPN for a game
 		page = requests.get(game.url)
 		tree = html.fromstring(page.content);
-		outputString = leagueObj.getFormattedTeamString(game.homeTeam) + " " + str(game.homeScore) + " - " + str(game.awayScore) + " "+ leagueObj.getFormattedTeamString(game.awayTeam) 
+		outputString = leagueObj.getFormattedTeamString(game.homeTeam) + " " + str(game.homeScore) + "-" + str(game.awayScore) + " "+ leagueObj.getFormattedTeamString(game.awayTeam) 
 
 		if (not game.gameEnded):
 			buzzerObj.startBuzzer(scoringTeamName)
@@ -293,6 +293,7 @@ class ESPNSportsObj:
 				#Concatonate last goal scorer and last assister and print this as the most recent scoring play
 				mostRecent = " " + finalPlaylist[-1] + playList2[-1]
 				outputString+=mostRecent
+			outputString="     "+outputString
 		else:
 			outputString+=" " + game.gameStatusStr	
 		printerObj.printToBoard(outputString)
