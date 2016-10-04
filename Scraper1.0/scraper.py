@@ -160,11 +160,9 @@ class Buzzer:
 	#buzzers will play on top of each other
 	def startBuzzer(self,teamName):
 		if os.name=="nt":
-			print("in if")
 			sound_player = "C:/Program Files (x86)/VideoLAN/VLC/vlc.exe"
 		else:
 			sound_player = "/usr/bin/cvlc"
-		#sound_player = "C:/Program Files (x86)/VideoLAN/VLC/vlc.exe"
 		sound_file = leagueObj.teamDict[teamName]['buzzerFile']
 		music_player_subprocess = subprocess.Popen([sound_player,sound_file])
 		threading.Timer(10.0,self.endBuzzer,[music_player_subprocess]).start()
@@ -279,12 +277,21 @@ class ESPNSportsObj:
 			buzzerObj.startBuzzer(scoringTeamName)
 			outputString+= " " + leagueObj.getFormattedTeamString(scoringTeamName) + " Goal! "
 			#Retreive list of scorers in order (not(@colspan) removes penalty plays) //which div
-			playList =  tree.xpath('//*[@id="my-players-table"]/*/div/table/*/*/td[3][not(@colspan)]/text()');
+			playList =  tree.xpath('//*[@id="my-players-table"]/*[@class="mod-container mod-no-header-footer mod-open mod-open-gamepack mod-box"]/div/table/*/*/td[3][not(@colspan)]/text()');
+			finalPlaylist = []
+			if (playList):
+				tmpstr=""
+				for tmpstr in playList:
+					if tmpstr[0].isdigit():
+						continue
+					finalPlaylist.append(tmpstr)
+
 			#Retreive list of assisters in order (0,1 or 2 can be given on a single line. 0 being unnasisted)
-			playList2 =  tree.xpath('//*[@id="my-players-table"]/*/div/table/*/*/td[3]/i/text()');
-			#Concatonate last goal scorer and last assister and print this as the most recent scoring play
-			if (playList and playList2):
-				mostRecent = " " + playList[-1] + playList2[-1]
+			playList2 =  tree.xpath('//*[@id="my-players-table"]/*[@class="mod-container mod-no-header-footer mod-open mod-open-gamepack mod-box"]/div/table/*/*/td[3]/i/text()');
+
+			if finalPlaylist and playList2 and (len(finalPlaylist) == (game.homeScore+game.awayScore)):				
+				#Concatonate last goal scorer and last assister and print this as the most recent scoring play
+				mostRecent = " " + finalPlaylist[-1] + playList2[-1]
 				outputString+=mostRecent
 		else:
 			outputString+=" " + game.gameStatusStr	
@@ -302,7 +309,7 @@ leagueObj = League()
 printerObj = Printer()
 def getDateStr():
 	dateStr = time.strftime("%Y%m%d") #oes this work for single digit days?
-	#dateStr="20160503"
+	#dateStr="20161002"
 	curTime = time.strftime("%H")
 	if int(curTime)<7:
 		dateStr=str(int(dateStr)-1)
