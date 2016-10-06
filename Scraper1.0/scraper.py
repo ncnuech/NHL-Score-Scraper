@@ -26,9 +26,15 @@ class Printer:
 
 	def printToBoard(self,outStr):
 		print("\n")
-		print(self.prefix+outStr)
-		rval = requests.get(self.prefix+outStr)
-		time.sleep(15)
+		#outStr=outStr[:150]
+
+		#while check if done is false, wait some seconds
+		for strComponent in outStr:
+			strComponent=self.prefix+strComponent
+			print(strComponent)
+			rval = requests.get(strComponent)
+			print(rval)
+			time.sleep(15)
 		print("\n")
 
 
@@ -217,17 +223,28 @@ class ESPNSportsObj:
 
 	#loops through games on a given day. Prints out info depending on if game is past,current or upcomming
 	def printableGameList(self):
-		leagueStr = ""
+		leagueStr = []
+		leagueStr.append("")
+		strLen=0
+		index=0;
 		for game in self.gameList:
 			gameStr=""
+			if strLen > 132:
+				strLen=0
+				index=index+1
+				leagueStr.append("")
 			if not game.gameStarted:
 				gameStr+=leagueObj.getFormattedTeamString(game.homeTeam) + " vs " + leagueObj.getFormattedTeamString(game.awayTeam) + " " + game.gameTime
+				strLen+=16
 			elif not game.gameEnded:
 				gameStr+=leagueObj.getFormattedTeamString(game.homeTeam) + " " + str(game.homeScore) + "-" + str(game.awayScore) + " " + leagueObj.getFormattedTeamString(game.awayTeam)
+				strLen+=11
 			else:
 				gameStr+=leagueObj.getFormattedTeamString(game.homeTeam) + " " + str(game.homeScore) + "-"  +  str(game.awayScore) + " " +leagueObj.getFormattedTeamString(game.awayTeam)  +" " + game.gameStatusStr
+				strLen+=17
 			gameStr+="   ";
-			leagueStr+=gameStr
+			strLen+=3
+			leagueStr[index]+=gameStr
 		return leagueStr
 					
 	#load the current score of all games of the day and compare to previous values
@@ -247,13 +264,20 @@ class ESPNSportsObj:
 			#homeScore = homeScore.encode("utf-8")
 			if (not homeScore[0].isdigit()):#\xa0
 				printerObj.debugPrint("game has not started")
-				game.gameTime = tree.xpath('//*[@id="' +  game.gameId +  '-statusLine2Left"]/text()')[0]
+				game.gameTime = tree.xpath('//*[@id="' +  game.gameId +  '-statusLine2Left"]/text()')[0].partition(' ')[0]
+				hour=game.gameTime.partition(':')[0]
+				minute=game.gameTime.partition(':')[2]
+				hour=str(int(hour)-1)
+				game.gameTime=hour+":"+minute
+
 				continue
 			elif (not game.gameStarted):
 				printerObj.debugPrint("Game Just Started")
 				game.gameStarted=True
 			elif (not game.gameEnded and (game.gameStatusStr=='Final' or game.gameStatusStr=='Final/OT')):
 				printerObj.debugPrint("Game Just Ended")
+				if (len(game.gameStatusStr)>5):
+					game.gameStatusStr="F/OT"
 				game.gameEnded = True
 				self.loadGame(game,"")
 				continue
@@ -297,14 +321,18 @@ class ESPNSportsObj:
 			outputString="     "+outputString
 		else:
 			outputString+=" " + game.gameStatusStr	
-		printerObj.printToBoard(outputString)
+		outputList=[]
+		outputList.append(outputString)
+		printerObj.printToBoard(outputList)
 
 #retrive the headlines from NHL.com
 def getNHLHeadlines():
 	page = requests.get("https://www.nhl.com/")
 	tree = html.fromstring(page.content);
 	headlines = tree.xpath('//*[@id="content-wrap"]/div/div[3]/div[2]/section[1]/ul/*/a/text()')
-	printerObj.printToBoard(leagueObj.teamDict['Default']['hex'] + "30" + headlines)
+	outputList=[]
+	outputList.append(leagueObj.teamDict['Default']['hex'] + "30" + headlines)
+	printerObj.printToBoard(outputList)
 
 buzzerObj = Buzzer()
 leagueObj = League()
@@ -320,7 +348,9 @@ def getDateStr():
 #Main driver for program, runs until shut down.
 def main():
 	#initialize list of games
-
+	str=[]
+	str.append("~ffffe630Hockey Ticker")
+	printerObj.printToBoard(str)
 	scoreboard = ESPNSportsObj()
 	loadedDay=True
 	delay=10
