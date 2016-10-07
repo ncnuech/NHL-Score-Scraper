@@ -14,20 +14,28 @@ import datetime
 import logging
 
 class Printer:
+	lastPrintWasSummary=False
 
 	#prefix="http://10.177.105.74:81/text/"
 	prefix="http://10.177.105.137/arduino/text/"
-	color="G"
 	brightness="30"
 
 	#Color Then 0-9
 	def __init__(self):
 		return
 
-	def printToBoard(self,outStr):
+	def printToBoard(self,outStr,type):
 		print("\n")
 		#outStr=outStr[:150]
-
+		if ESPNSportsObj.gamesOver==True:
+			rval = requests.get("")
+			return;
+		if (type=="Summary" and len(outStr) == 1):
+			if self.lastPrintWasSummary==True:
+				return
+			self.lastPrintWasSummary=True
+		else:
+			self.lastPrintWasSummary=False
 		#while check if done is false, wait some seconds
 		for strComponent in outStr:
 			strComponent=self.prefix+strComponent
@@ -144,7 +152,7 @@ class League:
 		self.teamDict["Flyers"] = {"abbr":"PHI","buzzerFile":prefix+"philadelphia.mp3","hex":"~f37737"}
 		self.teamDict["Penguins"] = {"abbr":"PIT","buzzerFile":prefix+"pittsburgh.mp3","hex":"~7ed5fa"}
 		self.teamDict["Capitals"] = {"abbr":"WSH","buzzerFile":prefix+"washington.mp3","hex":"~e51837"}
-		self.teamDict["Default"] = {"abbr":"DEF","buzzerFile":prefix+"hartford.mp3","hex":"~ffffe6"}
+		self.teamDict["Default"] = {"abbr":"DEF","buzzerFile":prefix+"gameOver.mp3","hex":"~ffffe6"}
 
 
 	def getFormattedTeamString(self,teamName):
@@ -165,6 +173,9 @@ class Buzzer:
 	#currently 10 seconds to end buzzer
 	#buzzers will play on top of each other
 	def startBuzzer(self,teamName):
+		playTime=10
+		if (teamName=="Default"):
+			playTime=8
 		if os.name=="nt":
 			sound_player = "C:/Program Files (x86)/VideoLAN/VLC/vlc.exe"
 		else:
@@ -188,12 +199,15 @@ class ESPNSportsObj:
 	#Current day is currently Hardcoded
 	#TODO grab game on current date
 	gameList = []
-
+	gamesOver = False
+	gameOverCount=0
 	def __init__(self):
 		self.startDay()
 
 	def startDay(self):
 		self.gameList = []
+		self.gamesOver=False
+		self.gameOverCount=0
 		#Retrieve the HTML for ESPN scoreboard
 		page = requests.get('http://espn.go.com/nhl/scoreboard?date='+getDateStr())
 		tree = html.fromstring(page.content);
@@ -264,7 +278,11 @@ class ESPNSportsObj:
 			#homeScore = homeScore.encode("utf-8")
 			if (not homeScore[0].isdigit()):#\xa0
 				printerObj.debugPrint("game has not started")
-				game.gameTime = tree.xpath('//*[@id="' +  game.gameId +  '-statusLine2Left"]/text()')[0].partition(' ')[0]
+				game.gameTime = tree.xpath('//*[@id="' +  game.gameId +  '-statusLine2Left"]/text()')
+				if not game.gameTime:
+					game.gameTime="POS"
+					continue
+				game.gameTime=game.gameTime[0].partition(' ')[0]
 				hour=game.gameTime.partition(':')[0]
 				minute=game.gameTime.partition(':')[2]
 				hour=str(int(hour)-1)
@@ -276,6 +294,9 @@ class ESPNSportsObj:
 				game.gameStarted=True
 			elif (not game.gameEnded and (game.gameStatusStr=='Final' or game.gameStatusStr=='Final/OT')):
 				printerObj.debugPrint("Game Just Ended")
+				self.gameOverCount=self.gameOverCount+1
+				if self.gameOverCount==len(self.gameList):
+					self.gamesOver=True
 				if (len(game.gameStatusStr)>5):
 					game.gameStatusStr="F/OT"
 				game.gameEnded = True
@@ -289,7 +310,8 @@ class ESPNSportsObj:
 				#retrieve information about scoring play
 				self.loadGame(game,game.getScoringTeamName(scoringTeam))
 		if not gameHasChanged:
-			printerObj.printToBoard(self.printableGameList())
+			printerObj.printToBoard(self.printableGameList(),"Summary")
+
 	#given game object for a game
 	#find teams playing, scores, and most recent scoring play
 	def loadGame(self, game,scoringTeamName):
@@ -320,10 +342,11 @@ class ESPNSportsObj:
 				outputString+=mostRecent
 			outputString="     "+outputString
 		else:
+			buzzerObj.startBuzzer("Default")
 			outputString+=" " + game.gameStatusStr	
 		outputList=[]
 		outputList.append(outputString)
-		printerObj.printToBoard(outputList)
+		printerObj.printToBoard(outputList,"action")
 
 #retrive the headlines from NHL.com
 def getNHLHeadlines():
@@ -332,7 +355,7 @@ def getNHLHeadlines():
 	headlines = tree.xpath('//*[@id="content-wrap"]/div/div[3]/div[2]/section[1]/ul/*/a/text()')
 	outputList=[]
 	outputList.append(leagueObj.teamDict['Default']['hex'] + "30" + headlines)
-	printerObj.printToBoard(outputList)
+	printerObj.printToBoard(outputList,"news")
 
 buzzerObj = Buzzer()
 leagueObj = League()
@@ -350,7 +373,7 @@ def main():
 	#initialize list of games
 	str=[]
 	str.append("~ffffe630Hockey Ticker")
-	printerObj.printToBoard(str)
+	printerObj.printToBoard(str,"plain")
 	scoreboard = ESPNSportsObj()
 	loadedDay=True
 	delay=10
@@ -371,8 +394,6 @@ def main():
 
 #Test function that sends request directly to board
 def testBoardCommunication():
-	prefix="http://10.177.105.74:81/text/"
-	prefix="http://10.177.105.137/arduino/ledText2/"
 	rval = requests.get(prefix+"G9hello world!")
 	print(rval)
 
