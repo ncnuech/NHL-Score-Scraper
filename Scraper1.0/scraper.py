@@ -42,7 +42,8 @@ class Printer:
 			print(strComponent)
 			rval = requests.get(strComponent)
 			print(rval)
-			time.sleep(15)
+			if loadedDay==True:
+				time.sleep(15)
 		print("\n")
 
 
@@ -360,6 +361,7 @@ def getNHLHeadlines():
 buzzerObj = Buzzer()
 leagueObj = League()
 printerObj = Printer()
+loadedDay=False
 def getDateStr():
 	dateStr = time.strftime("%Y%m%d") #oes this work for single digit days?
 	#dateStr="20161002"
