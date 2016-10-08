@@ -13,6 +13,16 @@ import datetime
 
 import logging
 
+import smtplib
+
+class Messenger:
+	def __init__(self):
+		return
+	def sendMessage(self):
+		server = smtplib.SMTP("smtp.gmail.com",587)
+		server.starttls()
+		server.login('noahnuechterlein@gmail.com','Felipe12')
+		server.sendmail('9896986724','9896986724@tmomail.net','hello world')
 class Printer:
 	lastPrintWasSummary=False
 
@@ -361,6 +371,7 @@ def getNHLHeadlines():
 buzzerObj = Buzzer()
 leagueObj = League()
 printerObj = Printer()
+messengerObj = Messenger()
 loadedDay=False
 def getDateStr():
 	dateStr = time.strftime("%Y%m%d") #oes this work for single digit days?
@@ -372,6 +383,7 @@ def getDateStr():
 
 #Main driver for program, runs until shut down.
 def main():
+	messengerObj.sendMessage()
 	#initialize list of games
 	str=[]
 	str.append("~ffffe630Hockey Ticker")
