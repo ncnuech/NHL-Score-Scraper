@@ -18,11 +18,22 @@ import smtplib
 class Messenger:
 	def __init__(self):
 		return
-	def sendMessage(self):
+	def sendMessage(self,message):
+		message=message[len(printerObj.prefix)+4:]
+		messageList=message.split('~')
+		finalMessage=""
+		for msg in messageList:
+			msg=msg[8:]
+			finalMessage+=msg
+		print(finalMessage)
+		print(len(finalMessage))
 		server = smtplib.SMTP("smtp.gmail.com",587)
 		server.starttls()
 		server.login('noahnuechterlein@gmail.com','Felipe12')
-		server.sendmail('9896986724','9896986724@tmomail.net','hello world')
+		server.sendmail('noahnuechterlein@gmail.com','9896986724@vtext.com',finalMessage)
+		server.quit()
+
+
 class Printer:
 	lastPrintWasSummary=False
 
@@ -51,10 +62,14 @@ class Printer:
 			strComponent=self.prefix+strComponent
 			print(strComponent)
 			rval = requests.get(strComponent)
+			if (type=="action"):
+				messengerObj.sendMessage(strComponent)
 			print(rval)
-			if loadedDay==True:
-				time.sleep(15)
+			time.sleep(15)
 		print("\n")
+	def printTest(self,outStr):
+		rval = requests.get(self.prefix+outStr)
+
 
 
 	def debugPrint(self,outStr):
@@ -203,6 +218,42 @@ class Buzzer:
 	def __init__(self):		
 		return
 ###############################################
+#no access to power play points
+class Player:
+	skater = False
+	goalie = False
+	name=""
+	goals = 0
+	assists = 0
+	plusminus = 0
+	pim = 0
+	sog = 0
+	wins = 0
+	saveper = 0.0
+	gaa = 0.0
+	so = 0
+	score=0
+	def setSkater(self,_name,_goals,_assists,_plusminus,_pim,_sog):
+		self.name=_name
+		self.goals=_goals
+		self.assists=_assists
+		self.plusminus=_plusminus
+		self.pim=_pim
+		self.sog=_sog
+		self.skater=True
+		self.score = 1*self.goals+.75*float(self.assists)+.25*float(self.plusminus)+.15*float(self.pim)+.2*float(self.sog)
+		return
+	def setGoalie(self,_name,_wins,_saveper,_gaa,_so):
+		self.name=_name
+		self.wins=_wins
+		self.saveper=_saveper
+		self.gaa=_gaa
+		self.so=_so
+		self.goalie=True
+		self.score=self.wins*1.0+(3-self.gaa)+self.so*1.0+self.saveper*1
+		return
+	def __init__(self):		
+		return
 
 class ESPNSportsObj:
 
@@ -212,9 +263,67 @@ class ESPNSportsObj:
 	gameList = []
 	gamesOver = False
 	gameOverCount=0
+	playerList = []
 	def __init__(self):
 		self.startDay()
+	def loadGamePlayers(self,game):
+		page = requests.get(game.url)
+		tree = html.fromstring(page.content);
 
+		playerStats =  tree.xpath('//*[@id="my-players-table"]/div[5]/div[2]/table/thead/tr/td/*/div/table/tbody[1]/*');
+		for player in playerStats:
+			name = player.xpath('td[1]/a/text()')[0]
+			goals = int(player.xpath('td[2]/text()')[0])
+			assists = int(player.xpath('td[3]/text()')[0])
+			plusminus = int(player.xpath('td[4]/text()')[0])
+			sog = int(player.xpath('td[5]/text()')[0])
+			pim = int(player.xpath('td[9]/text()')[0])
+			playerObj = Player()
+			playerObj.setSkater(name,goals,assists,plusminus,pim,sog)
+			self.playerList.append(playerObj)
+
+		playerStats =  tree.xpath('//*[@id="my-players-table"]/div[6]/div[2]/table/thead/tr/*/div/div/table/tbody/*')
+		first=True
+		for player in playerStats:
+			name = player.xpath('td[1]/a/text()')[0]
+			goalsAllowed=int(player.xpath('td[3]/text()')[0])
+			saveper=float(player.xpath('td[5]/text()')[0])
+			toi=player.xpath('td[6]/text()')[0]
+			minutes=int(toi.split(':')[0])
+			seconds=float(toi.split(':')[1])
+			seconds=seconds/60.0
+			amountofgame=(minutes+seconds)/60
+			gaa=goalsAllowed/amountofgame
+			if first:
+				if game.awayScore>game.homeScore:
+					wins=1
+				else:
+					wins=0
+				first = False
+			else:
+				if game.homeScore>game.awayScore:
+					wins=1
+				else:
+					wins=0
+			if goalsAllowed==0:
+				so=1
+			else:
+				so=0
+			playerObj = Player()
+			playerObj.setGoalie(name,wins,saveper,gaa,so)
+			playerObj.score=playerObj.score*amountofgame
+			self.playerList.append(playerObj)
+		return
+	def loadDayPlayers(self):
+		for game in self.gameList:
+			self.loadGamePlayers(game)
+		topPlayer = Player()
+		for player in self.playerList:
+			if player.score>topPlayer.score:
+				topPlayer=player
+		print(topPlayer)
+		printerObj.printToBoard("    ~ffffe630"+topPlayer.name + " is the player of the day! ","player")
+		return
 	def startDay(self):
 		self.gameList = []
 		self.gamesOver=False
@@ -380,17 +489,18 @@ def getDateStr():
 	if int(curTime)<7:
 		dateStr=str(int(dateStr)-1)
 	return dateStr
-
+ 
 #Main driver for program, runs until shut down.
 def main():
-	messengerObj.sendMessage()
+	#messengerObj.sendMessage()
 	#initialize list of games
-	str=[]
-	str.append("~ffffe630Hockey Ticker")
-	printerObj.printToBoard(str,"plain")
+	str = "~ffffe630Hockey Ticker"
+	printerObj.printTest(str)
 	scoreboard = ESPNSportsObj()
 	loadedDay=True
 	delay=10
+	#scoreboard.loadDayPlayers()
+	#return
 	while True:
 		#check each of the games for updated scores
 		scoreboard.loadScoreboard()
