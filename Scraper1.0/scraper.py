@@ -43,7 +43,7 @@ class Printer:
 	lastPrintWasSummary=False
 
 	#prefix="http://10.177.105.74:81/text/"
-	prefix="http://10.177.105.137/arduino/text/"
+	prefix="http://10.177.105.138/arduino/text/"
 	webPrefix="http://noahn.me/getMessage?message="
 	brightness="30"
 
