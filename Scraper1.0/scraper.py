@@ -67,16 +67,16 @@ class Printer:
 		for strComponent in outStr:
 			strComponent=self.prefix+strComponent
 			print(strComponent)
-			#rval = requests.get(strComponent)
+			rval = requests.get(strComponent)
 			rval2 = requests.get(self.webPrefix+outStr[0])
 			if (type=="action"):
 				messengerObj.sendMessage(strComponent)
-			#print(rval)
+			print(rval)
 			print(rval2)
 			time.sleep(15)
 		print("\n")
 	def printTest(self,outStr):
-		#rval = requests.get(self.prefix+outStr)
+		rval = requests.get(self.prefix+outStr)
 		return
 
 
@@ -497,7 +497,7 @@ messengerObj = Messenger()
 loadedDay=False
 def getDateStr():
 	dateStr = time.strftime("%Y%m%d") #oes this work for single digit days?
-	dateStr="20161002"
+	#dateStr="20161002"
 	curTime = time.strftime("%H")
 	if int(curTime)<7:
 		dateStr=str(int(dateStr)-1)
