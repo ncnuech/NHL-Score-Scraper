@@ -16,9 +16,13 @@ import logging
 import smtplib
 
 class Messenger:
+	webPrefix="http://noahn.me/getPhoneForActions"
+
 	def __init__(self):
 		return
 	def sendMessage(self,message):
+		phoneListStr = requests.get(self.webPrefix)
+		phoneList = phoneListStr.text.split(' ')
 		message=message[len(printerObj.prefix)+4:]
 		messageList=message.split('~')
 		finalMessage=""
@@ -30,7 +34,8 @@ class Messenger:
 		server = smtplib.SMTP("smtp.gmail.com",587)
 		server.starttls()
 		server.login('noahnuechterlein@gmail.com','Felipe12')
-		server.sendmail('noahnuechterlein@gmail.com','9896986724@vtext.com',finalMessage)
+		for phone in phoneList:
+			server.sendmail('noahnuechterlein@gmail.com',phone+'@vtext.com',finalMessage)
 		server.quit()
 
 
@@ -39,6 +44,7 @@ class Printer:
 
 	#prefix="http://10.177.105.74:81/text/"
 	prefix="http://10.177.105.137/arduino/text/"
+	webPrefix="http://noahn.me/getMessage?message="
 	brightness="30"
 
 	#Color Then 0-9
@@ -61,15 +67,17 @@ class Printer:
 		for strComponent in outStr:
 			strComponent=self.prefix+strComponent
 			print(strComponent)
-			rval = requests.get(strComponent)
+			#rval = requests.get(strComponent)
+			rval2 = requests.get(self.webPrefix+outStr[0])
 			if (type=="action"):
 				messengerObj.sendMessage(strComponent)
-			print(rval)
+			#print(rval)
+			print(rval2)
 			time.sleep(15)
 		print("\n")
 	def printTest(self,outStr):
-		rval = requests.get(self.prefix+outStr)
-
+		#rval = requests.get(self.prefix+outStr)
+		return
 
 
 	def debugPrint(self,outStr):
@@ -272,6 +280,8 @@ class ESPNSportsObj:
 
 		playerStats =  tree.xpath('//*[@id="my-players-table"]/div[5]/div[2]/table/thead/tr/td/*/div/table/tbody[1]/*');
 		for player in playerStats:
+			if not player.xpath('td[1]/a/text()'):
+				continue;
 			name = player.xpath('td[1]/a/text()')[0]
 			goals = int(player.xpath('td[2]/text()')[0])
 			assists = int(player.xpath('td[3]/text()')[0])
@@ -322,7 +332,9 @@ class ESPNSportsObj:
 			if player.score>topPlayer.score:
 				topPlayer=player
 		print(topPlayer)
-		printerObj.printToBoard("    ~ffffe630"+topPlayer.name + " is the player of the day! ","player")
+		message = []
+		message.append("    ~ffffe630"+topPlayer.name + " is the player of the day! ")
+		printerObj.printToBoard(message,"player")
 		return
 	def startDay(self):
 		self.gameList = []
@@ -389,9 +401,9 @@ class ESPNSportsObj:
 
 		#For each game check score vs previous as well as game status
 		gameHasChanged=False
+		gameStillOn = False
 		for game in self.gameList:
-			if (game.gameEnded):
-			    continue
+			gameStillOn=True
 			homeScore = tree.xpath('//*[@id="' +  game.gameId +  '-homeHeaderScore"]/text()')[0]
 			awayScore = tree.xpath('//*[@id="' +  game.gameId +  '-awayHeaderScore"]/text()')[0]
 			game.gameStatusStr=tree.xpath('//*[@id="'+ game.gameId + '-statusLine1"]/text()')[0]
@@ -417,6 +429,7 @@ class ESPNSportsObj:
 				self.gameOverCount=self.gameOverCount+1
 				if self.gameOverCount==len(self.gameList):
 					self.gamesOver=True
+					self.loadDayPlayers()
 				if (len(game.gameStatusStr)>5):
 					game.gameStatusStr="F/OT"
 				game.gameEnded = True
@@ -431,7 +444,7 @@ class ESPNSportsObj:
 				self.loadGame(game,game.getScoringTeamName(scoringTeam))
 		if not gameHasChanged:
 			printerObj.printToBoard(self.printableGameList(),"Summary")
-
+		
 	#given game object for a game
 	#find teams playing, scores, and most recent scoring play
 	def loadGame(self, game,scoringTeamName):
@@ -484,7 +497,7 @@ messengerObj = Messenger()
 loadedDay=False
 def getDateStr():
 	dateStr = time.strftime("%Y%m%d") #oes this work for single digit days?
-	#dateStr="20161002"
+	dateStr="20161002"
 	curTime = time.strftime("%H")
 	if int(curTime)<7:
 		dateStr=str(int(dateStr)-1)
@@ -494,6 +507,7 @@ def getDateStr():
 def main():
 	#messengerObj.sendMessage()
 	#initialize list of games
+	print("hello")
 	str = "~ffffe630Hockey Ticker"
 	printerObj.printTest(str)
 	scoreboard = ESPNSportsObj()
