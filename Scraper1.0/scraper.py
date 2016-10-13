@@ -344,6 +344,10 @@ class ESPNSportsObj:
 		message.append("    ~ffffe630"+topPlayer.name + " is the player of the day! ")
 		if (utilityObj.hasFinishedBoot):
 			printerObj.printToBoard(message,"player")
+		webPrefix="http://noahn.me/getPhoneForActions?message="
+		rval = requests.get(self.webPrefix+message[0])
+
+	
 		return
 	def startDay(self):
 		self.gameList = []
@@ -520,7 +524,7 @@ loadedDay=False
 
 def getDateStr():
 	dateStr = time.strftime("%Y%m%d") #oes this work for single digit days?
-	#dateStr="20161002"
+	#dateStr="20161012"
 	curTime = time.strftime("%H")
 	if int(curTime)<7:
 		dateStr=str(int(dateStr)-1)
@@ -530,10 +534,10 @@ def getDateStr():
 def main():
 	#messengerObj.sendMessage()
 	#initialize list of games
-	leagueObj.getAllTeamsStr()
+	#leagueObj.getAllTeamsStr()
 	print("hello")
 	str = "~ffffe630Hockey Ticker"
-	printerObj.printTest(str)
+	printerObj.printTest(str)#uncomment
 	scoreboard = ESPNSportsObj()
 	loadedDay=True
 	delay=10
