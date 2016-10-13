@@ -192,6 +192,16 @@ class League:
 		defaultBrightness="30"
 		return self.teamDict[teamName]['hex'] + defaultBrightness + self.teamDict[teamName]['abbr'] + self.teamDict['Default']['hex'] + defaultBrightness
 
+	def getAllTeamsStr(self):
+		leagueStr = ""
+		for team in self.teamDict:
+			teamStr = self.teamDict[team]['hex'] + "30"+ self.teamDict[team]['abbr']
+			leagueStr = leagueStr + teamStr + "   "
+		print(leagueStr)
+		leagueArray=[]
+		leagueArray.append(leagueStr)
+		printerObj.printToBoard(leagueArray,"test")
+		return 
 	def __init__(self):
 		self.setupTeamDict()
 ###############################################
@@ -520,6 +530,7 @@ def getDateStr():
 def main():
 	#messengerObj.sendMessage()
 	#initialize list of games
+	leagueObj.getAllTeamsStr()
 	print("hello")
 	str = "~ffffe630Hockey Ticker"
 	printerObj.printTest(str)
