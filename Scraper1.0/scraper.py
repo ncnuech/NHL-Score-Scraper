@@ -156,22 +156,22 @@ class League:
 
 		prefix = "BuzzerSounds/"
 		self.teamDict["Blackhawks"] = {"abbr":"CHI","buzzerFile":prefix+ "chicago.mp3","hex":"~480000"}
-		self.teamDict["Avalanche"] = {"abbr":"COL","buzzerFile":prefix + "colorado.mp3","hex":"~870038"}
-		self.teamDict["Stars"] = {"abbr":"DAL","buzzerFile": prefix + "dallas.mp3","hex":"~03613f"}
-		self.teamDict["Wild"] ={"abbr":"MIN","buzzerFile":prefix + "minnesota.mp3","hex":"~164734"}
+		self.teamDict["Avalanche"] = {"abbr":"COL","buzzerFile":prefix + "colorado.mp3","hex":"~830018"}
+		self.teamDict["Stars"] = {"abbr":"DAL","buzzerFile": prefix + "dallas.mp3","hex":"~084c00"}
+		self.teamDict["Wild"] ={"abbr":"MIN","buzzerFile":prefix + "minnesota.mp3","hex":"~103d17"}
 		self.teamDict["Predators"] = {"abbr":"NSH","buzzerFile":prefix + "nashville.mp3","hex":"~ffb71a"}
 		self.teamDict["Blues"] = {"abbr":"STL","buzzerFile":prefix + "stlouis.mp3","hex":"~083377"}
 		self.teamDict["Jets"] = {"abbr":"WIN","buzzerFile":prefix + "winnepeg.mp3","hex":"~002e62"}
 		self.teamDict["Bruins"] = {"abbr":"BOS","buzzerFile":prefix+"boston.mp3","hex":"~fcb930"}
-		self.teamDict["Sabres"] = {"abbr":"BUF","buzzerFile":prefix+"buffalo.mp3","hex":"~f2b434"}
+		self.teamDict["Sabres"] = {"abbr":"BUF","buzzerFile":prefix+"buffalo.mp3","hex":"~9e4e00"}
 		self.teamDict["Red Wings"] = {"abbr":"DET","buzzerFile":prefix+ "detroit.mp3","hex":"~ff0000"}
 		self.teamDict["Panthers"] = {"abbr":"FLA","buzzerFile":prefix+"florida.mp3","hex":"~c49818"}
 		self.teamDict["Canadiens"] = {"abbr":"MTL","buzzerFile":prefix+"montreal.mp3","hex":"~ff0000"}
 		self.teamDict["Senators"] = {"abbr":"OTT","buzzerFile":prefix+"ottawa.mp3","hex":"~D47E00"}
 		self.teamDict["Lightning"] = {"abbr":"TB","buzzerFile":prefix+"tampabay.mp3","hex":"~ffffff"}
 		self.teamDict["Maple Leafs"] = {"abbr":"TOR","buzzerFile":prefix+"toronto.mp3","hex":"~013e7f"}
-		self.teamDict["Ducks"] = {"abbr":"ANA","buzzerFile":prefix+"anaheim.mp3","hex":"~b6985a"}
-		self.teamDict["Coyotes"] = {"abbr":"ARI","buzzerFile":prefix+ "arizona.mp3","hex":"~7F3626"}
+		self.teamDict["Ducks"] = {"abbr":"ANA","buzzerFile":prefix+"anaheim.mp3","hex":"~c2672c"}
+		self.teamDict["Coyotes"] = {"abbr":"ARI","buzzerFile":prefix+ "arizona.mp3","hex":"~3d0100"}
 		self.teamDict["Flames"] = {"abbr":"CGY","buzzerFile":prefix+ "calgary.mp3","hex":"~c90000"}
 		self.teamDict["Oilers"] = {"abbr":"EDM","buzzerFile":prefix+ "edmonton.mp3","hex":"~eb6e1e"}
 		self.teamDict["Kings"] = {"abbr":"LA","buzzerFile":prefix+"losangeles.mp3","hex":"~231f20"}
@@ -180,7 +180,7 @@ class League:
 		self.teamDict["Hurricanes"] = {"abbr":"CAR","buzzerFile":prefix+"carolina.mp3","hex":"~ff0000"}
 		self.teamDict["Blue Jackets"] = {"abbr":"CLS","buzzerFile":prefix+"columbus.mp3","hex":"~002e62"}
 		self.teamDict["Devils"] = {"abbr":"NJ","buzzerFile":prefix+"newjersey.mp3","hex":"~ff0000"}
-		self.teamDict["Islanders"] = {"abbr":"NYI","buzzerFile":prefix+"newyorkislanders.mp3","hex":"~f57d31"}
+		self.teamDict["Islanders"] = {"abbr":"NYI","buzzerFile":prefix+"newyorkislanders.mp3","hex":"~ff5000"}
 		self.teamDict["Rangers"] = {"abbr":"NYR","buzzerFile":prefix+"newyorkrangers.mp3","hex":"~005dab"}
 		self.teamDict["Flyers"] = {"abbr":"PHI","buzzerFile":prefix+"philadelphia.mp3","hex":"~F32B00"}
 		self.teamDict["Penguins"] = {"abbr":"PIT","buzzerFile":prefix+"pittsburgh.mp3","hex":"~7ed5fa"}
@@ -196,7 +196,7 @@ class League:
 		leagueStr = ""
 		for team in self.teamDict:
 			teamStr = self.teamDict[team]['hex'] + "30"+ self.teamDict[team]['abbr']
-			leagueStr = leagueStr + teamStr + "   "
+			leagueStr = leagueStr + teamStr + " "
 		print(leagueStr)
 		leagueArray=[]
 		leagueArray.append(leagueStr)
