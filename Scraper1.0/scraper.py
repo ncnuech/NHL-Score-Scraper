@@ -64,7 +64,6 @@ class Printer:
 		else:
 			self.lastPrintWasSummary=False
 		#while check if done is false, wait some 
-		time.sleep(10)
 		for strComponent in outStr:
 			strComponent=self.prefix+strComponent
 			print(strComponent)
@@ -218,6 +217,8 @@ class Buzzer:
 	#currently 10 seconds to end buzzer
 	#buzzers will play on top of each other
 	def startBuzzer(self,teamName):
+		time.sleep(10)
+
 		playTime=10
 		if (teamName=="Default"):
 			playTime=8
