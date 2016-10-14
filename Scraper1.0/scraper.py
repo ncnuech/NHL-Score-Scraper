@@ -63,7 +63,8 @@ class Printer:
 			self.lastPrintWasSummary=True
 		else:
 			self.lastPrintWasSummary=False
-		#while check if done is false, wait some seconds
+		#while check if done is false, wait some 
+		time.sleep(10)
 		for strComponent in outStr:
 			strComponent=self.prefix+strComponent
 			print(strComponent)
