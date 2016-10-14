@@ -471,6 +471,8 @@ class ESPNSportsObj:
 		#Retreive the boxscore HTML from ESPN for a game
 		page = requests.get(game.url)
 		tree = html.fromstring(page.content);
+		if  utilityObj.hasFinishedBoot and len(self.gameList) > 5:
+			time.sleep(1);
 		outputString = leagueObj.getFormattedTeamString(game.homeTeam) + " " + str(game.homeScore) + "-" + str(game.awayScore) + " "+ leagueObj.getFormattedTeamString(game.awayTeam) 
 
 		if (not game.gameEnded):
