@@ -70,6 +70,7 @@ class Printer:
 			rval = requests.get(strComponent)#uncomment
 			rval2 = requests.get(self.webPrefix+outStr[0])
 			if (type=="action"):
+				print("sending text")
 				messengerObj.sendMessage(strComponent)
 			
 			time.sleep(15)
