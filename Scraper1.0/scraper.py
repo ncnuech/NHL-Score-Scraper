@@ -360,10 +360,9 @@ class ESPNSportsObj:
 		numMonth=int(month)
 		curTime = time.strftime("%H")
 		if int(curTime)<7:
-			day=str(int(dateStr)-1)
-			if dateStr==0:
-				dateStr="30"
-				month=str(int(month)-1)
+			yesterday = datetime.date.today() - datetime.timedelta(1)
+			month=yesterday.strftime('%m')
+			day=yesterday.strftime('%d')
 		month = calendar.month_name[int(month)]
 		ans = datetime.date(int(year), int(numMonth), int(day))
 		dayOfWeek = ans.strftime("%A")
@@ -573,7 +572,8 @@ def getDateStr():
 	#dateStr="20161013"
 	curTime = time.strftime("%H")
 	if int(curTime)<7:
-		dateStr=str(int(dateStr)-1)
+		yesterday = datetime.date.today() - datetime.timedelta(1)
+		dateStr=yesterday.strftime('%Y%m%d')
 	return dateStr
 
 #Main driver for program, runs until shut down.
