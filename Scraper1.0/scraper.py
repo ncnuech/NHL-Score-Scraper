@@ -15,6 +15,8 @@ import logging
 
 import smtplib
 
+import calendar
+
 class Messenger:
 	webPrefix="http://noahn.me/getPhoneForActions"
 
@@ -253,7 +255,8 @@ class Player:
 	gaa = 0.0
 	so = 0
 	score=0
-	def setSkater(self,_name,_goals,_assists,_plusminus,_pim,_sog):
+	url=""
+	def setSkater(self,_name,_goals,_assists,_plusminus,_pim,_sog,_url):
 		self.name=_name
 		self.goals=_goals
 		self.assists=_assists
@@ -261,15 +264,17 @@ class Player:
 		self.pim=_pim
 		self.sog=_sog
 		self.skater=True
+		self.url=_url
 		self.score = 1*self.goals+.75*float(self.assists)+.25*float(self.plusminus)+.15*float(self.pim)+.2*float(self.sog)
 		return
-	def setGoalie(self,_name,_wins,_saveper,_gaa,_so):
+	def setGoalie(self,_name,_wins,_saveper,_gaa,_so,_url):
 		self.name=_name
 		self.wins=_wins
 		self.saveper=_saveper
 		self.gaa=_gaa
 		self.so=_so
 		self.goalie=True
+		self.url=_url
 		self.score=self.wins*1.0+(3-self.gaa)+self.so*1.0+self.saveper*1
 		return
 	def __init__(self):		
@@ -294,6 +299,7 @@ class ESPNSportsObj:
 		for player in playerStats:
 			if not player.xpath('td[1]/a/text()'):
 				continue;
+			url = player.xpath('td[1]/a/@href')[0]
 			name = player.xpath('td[1]/a/text()')[0]
 			goals = int(player.xpath('td[2]/text()')[0])
 			assists = int(player.xpath('td[3]/text()')[0])
@@ -301,13 +307,16 @@ class ESPNSportsObj:
 			sog = int(player.xpath('td[5]/text()')[0])
 			pim = int(player.xpath('td[9]/text()')[0])
 			playerObj = Player()
-			playerObj.setSkater(name,goals,assists,plusminus,pim,sog)
+			playerObj.setSkater(name,goals,assists,plusminus,pim,sog,url)
 			self.playerList.append(playerObj)
 
 		playerStats =  tree.xpath('//*[@id="my-players-table"]/div[6]/div[2]/table/thead/tr/*/div/div/table/tbody/*')
 		first=True
 		for player in playerStats:
+			if not player.xpath('td[1]/a/text()'):
+				continue;
 			name = player.xpath('td[1]/a/text()')[0]
+			url = player.xpath('td[1]/a/@href')[0]
 			goalsAllowed=int(player.xpath('td[3]/text()')[0])
 			saveper=float(player.xpath('td[5]/text()')[0])
 			toi=player.xpath('td[6]/text()')[0]
@@ -332,10 +341,38 @@ class ESPNSportsObj:
 			else:
 				so=0
 			playerObj = Player()
-			playerObj.setGoalie(name,wins,saveper,gaa,so)
+			playerObj.setGoalie(name,wins,saveper,gaa,so,url)
 			playerObj.score=playerObj.score*amountofgame
 			self.playerList.append(playerObj)
 		return
+
+	def loadTopPlayerData(self,url):
+		page = requests.get(url)
+		tree = html.fromstring(page.content);
+		imgurl =  tree.xpath('//*[@id="content"]/div[3]/div[2]/div[2]/img/@src')[0];
+		name = tree.xpath('//*[@id="content"]/div[3]/div[2]/h1/text()')[0];
+		#color = tree.xpath('//*[@id="content"]/div[3]/div[2]/div[4]/table/thead/tr/th[3]');
+		date = "Friday October 14th"
+
+		month = time.strftime("%m") #oes this work for single digit days?
+		day = time.strftime("%d") #oes this work for single digit days?
+		year = time.strftime("%y")
+		numMonth=int(month)
+		curTime = time.strftime("%H")
+		if int(curTime)<7:
+			day=str(int(dateStr)-1)
+			if dateStr==0:
+				dateStr="30"
+				month=str(int(month)-1)
+		month = calendar.month_name[int(month)]
+		ans = datetime.date(int(year), int(numMonth), int(day))
+		dayOfWeek = ans.strftime("%A")
+		if 4 <= int(day) <= 20 or 24 <= int(day) <= 30:
+			suffix = "th"
+		else:
+			suffix = ["st", "nd", "rd"][int(day) % 10 - 1]
+		date = dayOfWeek + " " + month + " " + day + suffix
+		return date,name,imgurl
 	def loadDayPlayers(self):
 		for game in self.gameList:
 			self.loadGamePlayers(game)
@@ -345,10 +382,14 @@ class ESPNSportsObj:
 				topPlayer=player
 		message = []
 		message.append("    ~ffffe630"+topPlayer.name + " is the player of the day! ")
-		if (utilityObj.hasFinishedBoot):
-			printerObj.printToBoard(message,"player")
-		webPrefix="http://noahn.me/getPhoneForActions?message="
-		rval = requests.get(self.webPrefix+message[0])
+		#if (utilityObj.hasFinishedBoot):
+		#	printerObj.printToBoard(message,"player")
+		self.webPrefix="http://noahn.me"
+		webPathPhone = "/getPhoneForActions?message="
+		webPathSetPlayer = "/setPlayerOfDay?"
+		rval = requests.get(self.webPrefix+webPathPhone+message[0])
+		day,message,url=self.loadTopPlayerData(topPlayer.url)
+		rval2 = requests.get(self.webPrefix + webPathSetPlayer + "day=" + day + "&message=" + message + "&url=" +  url) 
 
 	
 		return
@@ -529,7 +570,7 @@ loadedDay=False
 
 def getDateStr():
 	dateStr = time.strftime("%Y%m%d") #oes this work for single digit days?
-	#dateStr="20161012"
+	#dateStr="20161013"
 	curTime = time.strftime("%H")
 	if int(curTime)<7:
 		dateStr=str(int(dateStr)-1)
@@ -546,7 +587,7 @@ def main():
 	scoreboard = ESPNSportsObj()
 	loadedDay=True
 	delay=10
-	#scoreboard.loadDayPlayers()
+	#scoreboard.loadDayPlayers() #comment
 	#return
 	while True:
 		#check each of the games for updated scores
