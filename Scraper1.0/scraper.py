@@ -291,9 +291,12 @@ class ESPNSportsObj:
 	def __init__(self):
 		self.startDay()
 	def loadGamePlayers(self,game):
-		time.sleep(.25);
 		printerObj.debugPrint("get request to " + game.url)
-		page = requests.get(game.url)
+		try:
+			page = requests.get(game.url)
+		except requests.exceptions.RequestException as e:
+			print("Error in load game players")
+			return
 		tree = html.fromstring(page.content);
 
 		playerStats =  tree.xpath('//*[@id="my-players-table"]/*/div[2]/table/thead/tr/td/*/div/table/tbody[1]/*');
@@ -348,9 +351,12 @@ class ESPNSportsObj:
 		return
 
 	def loadTopPlayerData(self,url):
-		time.sleep(.5);
 		printerObj.debugPrint("get request to " + url)
-		page = requests.get(url)
+		try:
+			page = requests.get(url)
+		except requests.exceptions.RequestException as e:
+			print("error in loadTopPlayerData")
+			return
 		tree = html.fromstring(page.content);
 		imgurl =  tree.xpath('//*[@id="content"]/div[3]/div[2]/div[2]/img/@src')[0];
 		name = tree.xpath('//*[@id="content"]/div[3]/div[2]/h1/text()')[0];
@@ -403,6 +409,7 @@ class ESPNSportsObj:
 		self.gameOverCount=0
 		#Retrieve the HTML for ESPN scoreboard
 		printerObj.debugPrint("get request to " + 'http://espn.go.com/nhl/scoreboard?date='+getDateStr())
+
 		page = requests.get('http://espn.go.com/nhl/scoreboard?date='+getDateStr())
 		tree = html.fromstring(page.content);
 
@@ -419,7 +426,7 @@ class ESPNSportsObj:
 		#Add each game to the games list with initialized data
 		for id in idList:
 			#find the urls of each game in the scoreboard. dissselect the recap headlines which are found similarly
-			url = "http://espn.go.com" + str(tree.xpath('//*[@id="' + id +  '-gameLinks"]/a[1]/@href')[0])
+			url = "http://espn.go.com/nhl/boxscore?gameId=" + str(id)
 			#retrieve remaining game data( not currently using homeScore or awayScore as it should start at 0-0). 
 			homeScore = tree.xpath('//*[@id="' +  id +  '-homeHeaderScore"]/text()')[0]
 			awayScore = tree.xpath('//*[@id="' +  id +  '-awayHeaderScore"]/text()')[0]
@@ -428,6 +435,7 @@ class ESPNSportsObj:
 
 			newGame = Game(awayTeam,homeTeam,url,id)
 			self.gameList.append(newGame)
+		return
 
 	#loops through games on a given day. Prints out info depending on if game is past,current or upcomming
 	def printableGameList(self):
@@ -458,9 +466,12 @@ class ESPNSportsObj:
 	#load the current score of all games of the day and compare to previous values
 	def loadScoreboard(self):
 		#Retreive HTML for ESPN Scoreboard
-		time.sleep(1)
 		printerObj.debugPrint("get request to " + 'http://espn.go.com/nhl/scoreboard?date='+getDateStr())
-		page = requests.get('http://espn.go.com/nhl/scoreboard?date='+getDateStr())
+		try:
+			page = requests.get('http://espn.go.com/nhl/scoreboard?date='+getDateStr())
+		except requests.exceptions.RequestException as e:
+			print("error in loadScoreboard")
+			return;
 		tree = html.fromstring(page.content);
 
 		#For each game check score vs previous as well as game status
@@ -517,12 +528,16 @@ class ESPNSportsObj:
 	#find teams playing, scores, and most recent scoring play
 	def loadGame(self, game,scoringTeamName):
 		#Retreive the boxscore HTML from ESPN for a game
-		time.sleep(1);
 		printerObj.debugPrint("get request to " + game.url)
-		page = requests.get(game.url)
+		try:
+			page = requests.get(game.url)
+		except requests.exceptions.RequestException as e:
+			print("error in load game")
+			time.sleep(5)
+			self.loadGame(game,scoringTeamName)
+			return
 		tree = html.fromstring(page.content);
-		if  utilityObj.hasFinishedBoot:
-			time.sleep(1);
+
 		outputString = leagueObj.getFormattedTeamString(game.homeTeam) + " " + str(game.homeScore) + "-" + str(game.awayScore) + " "+ leagueObj.getFormattedTeamString(game.awayTeam) 
 
 		if (not game.gameEnded):
