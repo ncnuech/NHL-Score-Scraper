@@ -293,6 +293,7 @@ class ESPNSportsObj:
 		self.startDay()
 	def loadGamePlayers(self,game):
 		time.sleep(.25);
+		printerObj.debugPrint("get request to " + game.url)
 		page = requests.get(game.url)
 		tree = html.fromstring(page.content);
 
@@ -349,6 +350,7 @@ class ESPNSportsObj:
 
 	def loadTopPlayerData(self,url):
 		time.sleep(.5);
+		printerObj.debugPrint("get request to " + url)
 		page = requests.get(url)
 		tree = html.fromstring(page.content);
 		imgurl =  tree.xpath('//*[@id="content"]/div[3]/div[2]/div[2]/img/@src')[0];
@@ -391,6 +393,7 @@ class ESPNSportsObj:
 		message = topPlayer.name + " is the player of the day!"
 		#messengerObj.sendMessage(message)
 		day,message,url=self.loadTopPlayerData(topPlayer.url)
+
 		rval2 = requests.get(self.webPrefix + webPathSetPlayer + "day=" + day + "&message=" + message + "&url=" +  url) 
 
 	
@@ -400,6 +403,7 @@ class ESPNSportsObj:
 		self.gamesOver=False
 		self.gameOverCount=0
 		#Retrieve the HTML for ESPN scoreboard
+		printerObj.debugPrint("get request to " + 'http://espn.go.com/nhl/scoreboard?date='+getDateStr())
 		page = requests.get('http://espn.go.com/nhl/scoreboard?date='+getDateStr())
 		tree = html.fromstring(page.content);
 
@@ -455,7 +459,8 @@ class ESPNSportsObj:
 	#load the current score of all games of the day and compare to previous values
 	def loadScoreboard(self):
 		#Retreive HTML for ESPN Scoreboard
-		time.sleep(1);
+		time.sleep(1)
+		printerObj.debugPrint("get request to " + 'http://espn.go.com/nhl/scoreboard?date='+getDateStr())
 		page = requests.get('http://espn.go.com/nhl/scoreboard?date='+getDateStr())
 		tree = html.fromstring(page.content);
 
@@ -514,6 +519,7 @@ class ESPNSportsObj:
 	def loadGame(self, game,scoringTeamName):
 		#Retreive the boxscore HTML from ESPN for a game
 		time.sleep(1);
+		printerObj.debugPrint("get request to " + game.url)
 		page = requests.get(game.url)
 		tree = html.fromstring(page.content);
 		if  utilityObj.hasFinishedBoot:
@@ -587,22 +593,19 @@ def getDateStr():
 
 #Main driver for program, runs until shut down.
 def main():
-	#messengerObj.sendMessage()
-	#initialize list of games
-	#leagueObj.getAllTeamsStr()
-	print("hello")
+
 	#str = "~ffffe630Hockey Ticker"
 	#printerObj.printTest(str)#uncomment
+
+	#initialize list of games
 	scoreboard = ESPNSportsObj()
 	loadedDay=True
 	delay=10
-	#scoreboard.loadDayPlayers() #comment
-	#return
+
 	while True:
 		#check each of the games for updated scores
 		scoreboard.loadScoreboard()
 		##wait x seconds for next check
-		delay=5
 		time.sleep(delay)
 		printerObj.debugPrint("looping")
 		if time.strftime("%H")==3:
