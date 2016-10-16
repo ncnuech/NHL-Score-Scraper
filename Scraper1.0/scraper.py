@@ -18,12 +18,13 @@ import smtplib
 import calendar
 
 class Messenger:
-	webPrefix="http://noahn.me/getPhoneForActions"
-
+	webPrefixAction="http://noahn.me/getPhoneForActions?type="
+	webPrefixPlayerOfDay="http://noahn.me/getPhoneForPlayerOfDay"
 	def __init__(self):
 		return
-	def sendMessage(self,message):
-		phoneListStr = requests.get(self.webPrefix)
+	def sendMessage(self,message,type):
+		phoneListStr=""
+		phoneListStr = requests.get(self.webPrefixAction + type)
 		phoneList = phoneListStr.text.split(' ')
 		message=message[len(printerObj.prefix)+4:]
 		messageList=message.split('~')
@@ -72,9 +73,7 @@ class Printer:
 			rval = requests.get(strComponent)#uncomment
 			rval2 = requests.get(self.webPrefix+outStr[0])
 			if (type=="action"):
-				print("sending text")
-				messengerObj.sendMessage(strComponent)
-			
+				messengerObj.sendMessage(strComponent,type)
 			time.sleep(15)
 		print("\n")
 	def printTest(self,outStr):
@@ -391,7 +390,7 @@ class ESPNSportsObj:
 		self.webPrefix="http://noahn.me"
 		webPathSetPlayer = "/setPlayerOfDay?"
 		message = topPlayer.name + " is the player of the day!"
-		#messengerObj.sendMessage(message)
+		messengerObj.sendMessage(message,"playerOfDay")
 		day,message,url=self.loadTopPlayerData(topPlayer.url)
 
 		rval2 = requests.get(self.webPrefix + webPathSetPlayer + "day=" + day + "&message=" + message + "&url=" +  url) 
