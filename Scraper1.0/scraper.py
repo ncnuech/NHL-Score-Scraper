@@ -292,12 +292,13 @@ class ESPNSportsObj:
 	def __init__(self):
 		self.startDay()
 	def loadGamePlayers(self,game):
+		time.sleep(.25);
 		page = requests.get(game.url)
 		tree = html.fromstring(page.content);
 
-		playerStats =  tree.xpath('//*[@id="my-players-table"]/div[5]/div[2]/table/thead/tr/td/*/div/table/tbody[1]/*');
+		playerStats =  tree.xpath('//*[@id="my-players-table"]/*/div[2]/table/thead/tr/td/*/div/table/tbody[1]/*');
 		for player in playerStats:
-			if not player.xpath('td[1]/a/text()'):
+			if not player.xpath('td[1]/a/text()') or not player.xpath('td[9]/text()'):
 				continue;
 			url = player.xpath('td[1]/a/@href')[0]
 			name = player.xpath('td[1]/a/text()')[0]
@@ -347,6 +348,7 @@ class ESPNSportsObj:
 		return
 
 	def loadTopPlayerData(self,url):
+		time.sleep(.5);
 		page = requests.get(url)
 		tree = html.fromstring(page.content);
 		imgurl =  tree.xpath('//*[@id="content"]/div[3]/div[2]/div[2]/img/@src')[0];
@@ -356,7 +358,7 @@ class ESPNSportsObj:
 
 		month = time.strftime("%m") #oes this work for single digit days?
 		day = time.strftime("%d") #oes this work for single digit days?
-		year = time.strftime("%y")
+		year = time.strftime("%Y")
 		numMonth=int(month)
 		curTime = time.strftime("%H")
 		if int(curTime)<7:
@@ -372,6 +374,7 @@ class ESPNSportsObj:
 			suffix = ["st", "nd", "rd"][int(day) % 10 - 1]
 		date = dayOfWeek + " " + month + " " + day + suffix
 		return date,name,imgurl
+
 	def loadDayPlayers(self):
 		for game in self.gameList:
 			self.loadGamePlayers(game)
@@ -381,12 +384,12 @@ class ESPNSportsObj:
 				topPlayer=player
 		message = []
 		message.append("    ~ffffe630"+topPlayer.name + " is the player of the day! ")
-		#if (utilityObj.hasFinishedBoot):
-		#	printerObj.printToBoard(message,"player")
+		if (utilityObj.hasFinishedBoot):
+			printerObj.printToBoard(message,"player")
 		self.webPrefix="http://noahn.me"
-		webPathPhone = "/getPhoneForActions?message="
 		webPathSetPlayer = "/setPlayerOfDay?"
-		rval = requests.get(self.webPrefix+webPathPhone+message[0])
+		message = topPlayer.name + " is the player of the day!"
+		#messengerObj.sendMessage(message)
 		day,message,url=self.loadTopPlayerData(topPlayer.url)
 		rval2 = requests.get(self.webPrefix + webPathSetPlayer + "day=" + day + "&message=" + message + "&url=" +  url) 
 
@@ -452,6 +455,7 @@ class ESPNSportsObj:
 	#load the current score of all games of the day and compare to previous values
 	def loadScoreboard(self):
 		#Retreive HTML for ESPN Scoreboard
+		time.sleep(1);
 		page = requests.get('http://espn.go.com/nhl/scoreboard?date='+getDateStr())
 		tree = html.fromstring(page.content);
 
@@ -478,14 +482,14 @@ class ESPNSportsObj:
 			elif (not game.gameStarted):
 				printerObj.debugPrint("Game Just Started")
 				game.gameStarted=True
-			elif (not game.gameEnded and (game.gameStatusStr=='Final' or game.gameStatusStr=='Final/OT')):
+			elif (not game.gameEnded and (game.gameStatusStr=='Final' or game.gameStatusStr=='Final/OT' or game.gameStatusStr=='Final/SO')):
 				printerObj.debugPrint("Game Just Ended")
 				self.gameOverCount=self.gameOverCount+1
 				if self.gameOverCount==len(self.gameList):
 					self.gamesOver=True
 					utilityObj.readyForPlayerOfDay=True
 				if (len(game.gameStatusStr)>5):
-					game.gameStatusStr="F/OT"
+					game.gameStatusStr="F"+ game.gameStatusStr[5:]
 				game.gameEnded = True
 				self.loadGame(game,"")
 				continue
@@ -509,6 +513,7 @@ class ESPNSportsObj:
 	#find teams playing, scores, and most recent scoring play
 	def loadGame(self, game,scoringTeamName):
 		#Retreive the boxscore HTML from ESPN for a game
+		time.sleep(1);
 		page = requests.get(game.url)
 		tree = html.fromstring(page.content);
 		if  utilityObj.hasFinishedBoot:
@@ -554,11 +559,15 @@ def getNHLHeadlines():
 	outputList=[]
 	outputList.append(leagueObj.teamDict['Default']['hex'] + "30" + headlines)
 	printerObj.printToBoard(outputList,"news")
+
+
 class programUtilities:
 	hasFinishedBoot=False
 	readyForPlayerOfDay=False
 	def __init__(self):		
 		return
+
+
 buzzerObj = Buzzer()
 leagueObj = League()
 printerObj = Printer()
@@ -569,11 +578,11 @@ loadedDay=False
 
 def getDateStr():
 	dateStr = time.strftime("%Y%m%d") #oes this work for single digit days?
-	#dateStr="20161013"
 	curTime = time.strftime("%H")
 	if int(curTime)<7:
 		yesterday = datetime.date.today() - datetime.timedelta(1)
 		dateStr=yesterday.strftime('%Y%m%d')
+	#dateStr="20161015"
 	return dateStr
 
 #Main driver for program, runs until shut down.
@@ -582,8 +591,8 @@ def main():
 	#initialize list of games
 	#leagueObj.getAllTeamsStr()
 	print("hello")
-	str = "~ffffe630Hockey Ticker"
-	printerObj.printTest(str)#uncomment
+	#str = "~ffffe630Hockey Ticker"
+	#printerObj.printTest(str)#uncomment
 	scoreboard = ESPNSportsObj()
 	loadedDay=True
 	delay=10
@@ -593,6 +602,7 @@ def main():
 		#check each of the games for updated scores
 		scoreboard.loadScoreboard()
 		##wait x seconds for next check
+		delay=5
 		time.sleep(delay)
 		printerObj.debugPrint("looping")
 		if time.strftime("%H")==3:
