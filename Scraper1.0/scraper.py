@@ -333,6 +333,8 @@ class ESPNSportsObj:
 				saveper=float(player.xpath('td[5]/text()')[0])
 				toi=player.xpath('td[6]/text()')[0]
 				minutes=int(toi.split(':')[0])
+				if minutes<30:
+					continue
 				seconds=float(toi.split(':')[1])
 				seconds=seconds/60.0
 				amountofgame=(minutes+seconds)/60
@@ -386,16 +388,16 @@ class ESPNSportsObj:
 			if player.plusminus > 0:
 				stats = stats + "+" + str(player.plusminus) + ", "
 			elif player.plusminus==0:
+				stats = stats +  "+/-" + str(player.plusminus) + ", "
+			else:
 				stats = stats + str(player.plusminus) + ", "
 			stats = stats + str(player.pim) + " PIM, "
 			stats = stats + str(player.sog) + " SOG"
 		else:
-			stats = stats + str(player.gaa) + " gaa "
+			stats = stats + str(round(player.gaa,2)) + " gaa "
 			if player.wins==1:
 				stats = stats + "win, "
-			else:
-				stats = stats + "loss, "
-			stats = str(player.saveper) + " SV%"
+			stats = stats + str(round(player.saveper,3)) + " SV%"
 			if player.so==1:
 				stats = stats + " SO"
 		stats = stats + ")"
@@ -418,20 +420,47 @@ class ESPNSportsObj:
 		date = dayOfWeek + " " + month + " " + day + suffix
 		return date,name,imgurl,stats
 
-	def findTopPlayer(self):
+	def findTopPlayer(self,num):
 		for game in self.gameList:
 			self.loadGamePlayers(game)
 		topPlayer = Player()
-		for player in self.playerList:
-			if player.score>topPlayer.score:
-				topPlayer=player
-		return topPlayer
+		self.playerList = sorted(self.playerList, key=lambda Player: Player.score,reverse=True)
+		topPlayers = []
+		for i in range(num):
+			topPlayers.append(self.playerList[i])
+		return topPlayers
+
+
+
 	def loadUnfinishedDayPlayers(self):
-		topPlayer = self.findTopPlayer()
-		print(topPlayer.name + " is currently the player of the day")
+		topPlayers = self.findTopPlayer(3)
+		day = ""
+		nameList = []
+		urlList = []
+		statsList = []
+		nameStr = ""
+		urlStr=""
+		statsStr=""
+		for i in range(len(topPlayers)):
+			day,name,url,stats=self.loadTopPlayerData(topPlayers[i].url,topPlayers[i])
+			statsStr= statsStr+ stats+ "_"
+			nameStr=nameStr+name+"_"
+			urlStr=urlStr+url.split('&')[0]+"_"
+			nameList.append(name)
+			urlList.append(url)
+			statsList.append(stats)
+		nameStr=nameStr[:-1]
+		urlStr=urlStr[:-1]
+		statsStr = statsStr[:-1]
+		worstDay,worstName,worstUrl,worstStats=self.loadTopPlayerData(self.playerList[-1].url,self.playerList[-1])
+		self.webPrefix="http://noahn.me"
+		webPathSetPlayer = "/setCurPlayerOfDay?"
+		rval2 = requests.get(self.webPrefix + webPathSetPlayer + "day=" + day + "&message=" + nameStr + "&url=" +  urlStr + "&stats=" + statsStr) 
+
 		return
+
 	def loadDayPlayers(self):
-		topPlayer = self.findTopPlayer()
+		topPlayer = self.findTopPlayer(1)[0]
 		day,webmessage,url,stats=self.loadTopPlayerData(topPlayer.url,topPlayer)
 		message = []
 		message.append("    ~ffffe630"+topPlayer.name + " is the player of the day! " + stats)
@@ -562,6 +591,7 @@ class ESPNSportsObj:
 				#retrieve information about scoring play
 				self.loadGame(game,game.getScoringTeamName(scoringTeam))
 		if not gameHasChanged:
+			self.loadUnfinishedDayPlayers()
 			if not utilityObj.hasFinishedBoot:
 				utilityObj.hasFinishedBoot=True;
 			printerObj.printToBoard(self.printableGameList(),"Summary")
