@@ -25,13 +25,18 @@ class Messenger:
 	def sendMessage(self,message,type):
 		phoneListStr=""
 		phoneListStr = requests.get(self.webPrefixAction + type)
+		if phoneListStr.text=='':
+			return
 		phoneList = phoneListStr.text.split(' ')
-		message=message[len(printerObj.prefix)+4:]
-		messageList=message.split('~')
-		finalMessage=""
-		for msg in messageList:
-			msg=msg[8:]
-			finalMessage+=msg
+		if (type=="action"):
+			message=message[len(printerObj.prefix)+4:]
+			messageList=message.split('~')
+			finalMessage=""
+			for msg in messageList:
+				msg=msg[8:]
+				finalMessage+=msg
+		else:
+			finalMessage=message
 		print(finalMessage)
 		print(len(finalMessage))
 		server = smtplib.SMTP("smtp.gmail.com",587)
@@ -301,56 +306,68 @@ class ESPNSportsObj:
 
 		playerStats =  tree.xpath('//*[@id="my-players-table"]/*/div[2]/table/thead/tr/td/*/div/table/tbody[1]/*');
 		for player in playerStats:
-			if not player.xpath('td[1]/a/text()') or not player.xpath('td[9]/text()'):
-				continue;
-			url = player.xpath('td[1]/a/@href')[0]
-			name = player.xpath('td[1]/a/text()')[0]
-			goals = int(player.xpath('td[2]/text()')[0])
-			assists = int(player.xpath('td[3]/text()')[0])
-			plusminus = int(player.xpath('td[4]/text()')[0])
-			sog = int(player.xpath('td[5]/text()')[0])
-			pim = int(player.xpath('td[9]/text()')[0])
-			playerObj = Player()
-			playerObj.setSkater(name,goals,assists,plusminus,pim,sog,url)
-			self.playerList.append(playerObj)
-
+			try:
+				if not player.xpath('td[1]/a/text()') or not player.xpath('td[9]/text()'):
+					continue;
+				url = player.xpath('td[1]/a/@href')[0]
+				name = player.xpath('td[1]/a/text()')[0]
+				goals = int(player.xpath('td[2]/text()')[0])
+				assists = int(player.xpath('td[3]/text()')[0])
+				plusminus = int(player.xpath('td[4]/text()')[0])
+				sog = int(player.xpath('td[5]/text()')[0])
+				pim = int(player.xpath('td[9]/text()')[0])
+				playerObj = Player()
+				playerObj.setSkater(name,goals,assists,plusminus,pim,sog,url)
+				self.playerList.append(playerObj)
+			except:
+				continue
 		playerStats =  tree.xpath('//*[@id="my-players-table"]/div[6]/div[2]/table/thead/tr/*/div/div/table/tbody/*')
 		first=True
 		for player in playerStats:
-			if not player.xpath('td[1]/a/text()'):
-				continue;
-			name = player.xpath('td[1]/a/text()')[0]
-			url = player.xpath('td[1]/a/@href')[0]
-			goalsAllowed=int(player.xpath('td[3]/text()')[0])
-			saveper=float(player.xpath('td[5]/text()')[0])
-			toi=player.xpath('td[6]/text()')[0]
-			minutes=int(toi.split(':')[0])
-			seconds=float(toi.split(':')[1])
-			seconds=seconds/60.0
-			amountofgame=(minutes+seconds)/60
-			gaa=goalsAllowed/amountofgame
-			if first:
-				if game.awayScore>game.homeScore:
-					wins=1
+			try:
+				if not player.xpath('td[1]/a/text()') or not player.xpath('td[6]/text()'):
+					continue;
+				name = player.xpath('td[1]/a/text()')[0]
+				url = player.xpath('td[1]/a/@href')[0]
+				goalsAllowed=int(player.xpath('td[3]/text()')[0])
+				saveper=float(player.xpath('td[5]/text()')[0])
+				toi=player.xpath('td[6]/text()')[0]
+				minutes=int(toi.split(':')[0])
+				seconds=float(toi.split(':')[1])
+				seconds=seconds/60.0
+				amountofgame=(minutes+seconds)/60
+				gaa=goalsAllowed/amountofgame
+				if first:
+					if game.awayScore>game.homeScore:
+						wins=1
+					else:
+						wins=0
+					first = False
 				else:
-					wins=0
-				first = False
-			else:
-				if game.homeScore>game.awayScore:
-					wins=1
+					if game.homeScore>game.awayScore:
+						wins=1
+					else:
+						wins=0
+				if goalsAllowed==0:
+					so=1
 				else:
-					wins=0
-			if goalsAllowed==0:
-				so=1
-			else:
-				so=0
-			playerObj = Player()
-			playerObj.setGoalie(name,wins,saveper,gaa,so,url)
-			playerObj.score=playerObj.score*amountofgame
-			self.playerList.append(playerObj)
+					so=0
+				playerObj = Player()
+				playerObj.setGoalie(name,wins,saveper,gaa,so,url)
+				playerObj.score=playerObj.score*amountofgame
+				self.playerList.append(playerObj)
+			except:
+				continue
 		return
 
-	def loadTopPlayerData(self,url):
+	def pluralizeStats(self,stat,tag):
+		if stat==1:
+			stats = str(stat) + " " + tag + ", "
+		else:
+			stats = str(stat) + " " +tag + "s, "
+		return stats
+
+	def loadTopPlayerData(self,url,player):
 		printerObj.debugPrint("get request to " + url)
 		try:
 			page = requests.get(url)
@@ -362,7 +379,26 @@ class ESPNSportsObj:
 		name = tree.xpath('//*[@id="content"]/div[3]/div[2]/h1/text()')[0];
 		#color = tree.xpath('//*[@id="content"]/div[3]/div[2]/div[4]/table/thead/tr/th[3]');
 		date = "Friday October 14th"
-
+		stats = "("
+		if player.skater:
+			stats = stats+ self.pluralizeStats(player.goals,"Goal")
+			stats = stats + self.pluralizeStats(player.assists,"Assist")
+			if player.plusminus > 0:
+				stats = stats + "+" + str(player.plusminus) + ", "
+			elif player.plusminus==0:
+				stats = stats + str(player.plusminus) + ", "
+			stats = stats + str(player.pim) + " PIM, "
+			stats = stats + str(player.sog) + " SOG"
+		else:
+			stats = stats + str(player.gaa) + " gaa "
+			if player.wins==1:
+				stats = stats + "win, "
+			else:
+				stats = stats + "loss, "
+			stats = str(player.saveper) + " SV%"
+			if player.so==1:
+				stats = stats + " SO"
+		stats = stats + ")"
 		month = time.strftime("%m") #oes this work for single digit days?
 		day = time.strftime("%d") #oes this work for single digit days?
 		year = time.strftime("%Y")
@@ -380,26 +416,32 @@ class ESPNSportsObj:
 		else:
 			suffix = ["st", "nd", "rd"][int(day) % 10 - 1]
 		date = dayOfWeek + " " + month + " " + day + suffix
-		return date,name,imgurl
+		return date,name,imgurl,stats
 
-	def loadDayPlayers(self):
+	def findTopPlayer(self):
 		for game in self.gameList:
 			self.loadGamePlayers(game)
 		topPlayer = Player()
 		for player in self.playerList:
 			if player.score>topPlayer.score:
 				topPlayer=player
+		return topPlayer
+	def loadUnfinishedDayPlayers(self):
+		topPlayer = self.findTopPlayer()
+		print(topPlayer.name + " is currently the player of the day")
+		return
+	def loadDayPlayers(self):
+		topPlayer = self.findTopPlayer()
+		day,webmessage,url,stats=self.loadTopPlayerData(topPlayer.url,topPlayer)
 		message = []
-		message.append("    ~ffffe630"+topPlayer.name + " is the player of the day! ")
+		message.append("    ~ffffe630"+topPlayer.name + " is the player of the day! " + stats)
 		if (utilityObj.hasFinishedBoot):
 			printerObj.printToBoard(message,"player")
 		self.webPrefix="http://noahn.me"
 		webPathSetPlayer = "/setPlayerOfDay?"
-		message = topPlayer.name + " is the player of the day!"
+		message = topPlayer.name + " is the player of the day! "
 		messengerObj.sendMessage(message,"playerOfDay")
-		day,message,url=self.loadTopPlayerData(topPlayer.url)
-
-		rval2 = requests.get(self.webPrefix + webPathSetPlayer + "day=" + day + "&message=" + message + "&url=" +  url) 
+		rval2 = requests.get(self.webPrefix + webPathSetPlayer + "day=" + day + "&message=" + webmessage + "&url=" +  url + "&stats=" + stats) 
 
 	
 		return
