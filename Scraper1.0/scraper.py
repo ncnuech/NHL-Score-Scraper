@@ -112,6 +112,8 @@ class Game:
 	#string for type of game status used for end game right now
 	gameStatusStr = "";
 
+
+
 	gameTime=""
 	numTimesChecked=0
 	#id used to identify a given game(most notibly used by ESPN.com)
@@ -168,7 +170,7 @@ class League:
 		self.teamDict["Wild"] ={"abbr":"MIN","buzzerFile":prefix + "minnesota.mp3","hex":"~103d17"}
 		self.teamDict["Predators"] = {"abbr":"NSH","buzzerFile":prefix + "nashville.mp3","hex":"~ffb71a"}
 		self.teamDict["Blues"] = {"abbr":"STL","buzzerFile":prefix + "stlouis.mp3","hex":"~083377"}
-		self.teamDict["Jets"] = {"abbr":"WIN","buzzerFile":prefix + "winnepeg.mp3","hex":"~002e62"}
+		self.teamDict["Jets"] = {"abbr":"WPG","buzzerFile":prefix + "winnepeg.mp3","hex":"~002e62"}
 		self.teamDict["Bruins"] = {"abbr":"BOS","buzzerFile":prefix+"boston.mp3","hex":"~fcb930"}
 		self.teamDict["Sabres"] = {"abbr":"BUF","buzzerFile":prefix+"buffalo.mp3","hex":"~9e4e00"}
 		self.teamDict["Red Wings"] = {"abbr":"DET","buzzerFile":prefix+ "detroit.mp3","hex":"~ff0000"}
@@ -194,6 +196,36 @@ class League:
 		self.teamDict["Capitals"] = {"abbr":"WSH","buzzerFile":prefix+"washington.mp3","hex":"~ff0000"}
 		self.teamDict["Default"] = {"abbr":"DEF","buzzerFile":prefix+"gameOver.mp3","hex":"~ffffe6"}
 
+		self.teamDict["Chicago Blackhawks"] = self.teamDict["Blackhawks"];
+		self.teamDict["Colorado Avalanche"] = self.teamDict["Avalanche"];
+		self.teamDict["Dallas Stars"] = self.teamDict["Stars"]
+		self.teamDict["Minnesota Wild"] = self.teamDict["Wild"]
+		self.teamDict["Nashville Predators"] = self.teamDict["Predators"] 
+		self.teamDict["St. Louis Blues"]  = self.teamDict["Blues"] 
+		self.teamDict["Winnipeg Jets"] = self.teamDict["Jets"] 
+		self.teamDict["Boston Bruins"] = self.teamDict["Bruins"]
+		self.teamDict["Buffalo Sabres"] = self.teamDict["Sabres"]
+		self.teamDict["Detroit Red Wings"] = self.teamDict["Red Wings"]
+		self.teamDict["Florida Panthers"] = self.teamDict["Panthers"]
+		self.teamDict["Montreal Canadiens"] = self.teamDict["Canadiens"]
+		self.teamDict["Ottawa Senators"] = self.teamDict["Senators"] 
+		self.teamDict["Tampa Bay Lightning"]  = self.teamDict["Lightning"] 
+		self.teamDict["Toronto Maple Leafs"] = self.teamDict["Maple Leafs"]
+		self.teamDict["Anaheim Ducks"] = self.teamDict["Ducks"]
+		self.teamDict["Arizona Coyotes"] = self.teamDict["Coyotes"]
+		self.teamDict["Calgary Flames"]  = self.teamDict["Flames"] 
+		self.teamDict["Edmonton Oilers"] = self.teamDict["Oilers"]
+		self.teamDict["Los Angeles Kings"]  = self.teamDict["Kings"] 
+		self.teamDict["San Jose Sharks"] = self.teamDict["Sharks"]
+		self.teamDict["Vancouver Canucks"] = self.teamDict["Canucks"]
+		self.teamDict["Carolina Hurricanes"]= self.teamDict["Hurricanes"]
+		self.teamDict["Columbus"] = self.teamDict["Blue Jackets"]
+		self.teamDict["New Jersey Devils"] = self.teamDict["Devils"]
+		self.teamDict["New York Islanders"] = self.teamDict["Islanders"]
+		self.teamDict["New York Rangers"] = self.teamDict["Rangers"]
+		self.teamDict["Philadelphia Flyers"] = self.teamDict["Flyers"]
+		self.teamDict["Pittsburgh Penguins"] = self.teamDict["Penguins"]
+		self.teamDict["Washington Capitals"] = self.teamDict["Capitals"]
 
 	def getFormattedTeamString(self,teamName):
 		defaultBrightness="30"
@@ -321,11 +353,12 @@ class ESPNSportsObj:
 				self.playerList.append(playerObj)
 			except:
 				continue
-		playerStats =  tree.xpath('//*[@id="my-players-table"]/div[6]/div[2]/table/thead/tr/*/div/div/table/tbody/*')
+		playerStats =  tree.xpath('//*[@id="my-players-table"]/*/div[2]/table/thead/tr/*/div/div/table/tbody/*')
 		first=True
 		for player in playerStats:
 			try:
 				if not player.xpath('td[1]/a/text()') or not player.xpath('td[6]/text()'):
+					tempPlayer = player.xpath('td[1]/a/text()')
 					continue;
 				name = player.xpath('td[1]/a/text()')[0]
 				url = player.xpath('td[1]/a/@href')[0]
@@ -377,10 +410,20 @@ class ESPNSportsObj:
 			print("error in loadTopPlayerData")
 			return
 		tree = html.fromstring(page.content);
-		imgurl =  tree.xpath('//*[@id="content"]/div[3]/div[2]/div[2]/img/@src')[0];
-		name = tree.xpath('//*[@id="content"]/div[3]/div[2]/h1/text()')[0];
+		if ( tree.xpath('//*[@id="content"]/div[3]/div[2]/div[2]/img/@src')):
+			imgurl =  tree.xpath('//*[@id="content"]/div[3]/div[2]/div[2]/img/@src')[0];
+			name = tree.xpath('//*[@id="content"]/div[3]/div[2]/h1/text()')[0];
+			team = tree.xpath('//*[@id="content"]/div[3]/div[2]/div[3]/ul[1]/li[3]/a/text()')[0]
+		else:
+			imgurl=""
+			name = tree.xpath('//*[@id="content"]/div[3]/div[1]/div[1]/h1/text()')[0];
+			team = tree.xpath('//*[@id="content"]/div[3]/div[1]/div[3]/ul[1]/li[3]/a/text()')[0]
+
+			print("no image")
 		#color = tree.xpath('//*[@id="content"]/div[3]/div[2]/div[4]/table/thead/tr/th[3]');
 		date = "Friday October 14th"
+		teamAbbr = leagueObj.teamDict[team]['abbr'].lower()
+		teamPic = "http://a.espncdn.com/combiner/i?img=/i/teamlogos/nhl/500-dark/" + teamAbbr + ".png"
 		stats = "("
 		if player.skater:
 			stats = stats+ self.pluralizeStats(player.goals,"Goal")
@@ -418,9 +461,10 @@ class ESPNSportsObj:
 		else:
 			suffix = ["st", "nd", "rd"][int(day) % 10 - 1]
 		date = dayOfWeek + " " + month + " " + day + suffix
-		return date,name,imgurl,stats
+		return date,name,imgurl,stats,teamPic
 
 	def findTopPlayer(self,num):
+		self.playerList=[]
 		for game in self.gameList:
 			self.loadGamePlayers(game)
 		topPlayer = Player()
@@ -433,35 +477,33 @@ class ESPNSportsObj:
 
 
 	def loadUnfinishedDayPlayers(self):
+
 		topPlayers = self.findTopPlayer(3)
 		day = ""
-		nameList = []
-		urlList = []
-		statsList = []
 		nameStr = ""
 		urlStr=""
 		statsStr=""
+		teamPicStr=""
 		for i in range(len(topPlayers)):
-			day,name,url,stats=self.loadTopPlayerData(topPlayers[i].url,topPlayers[i])
+			day,name,url,stats,teamPic=self.loadTopPlayerData(topPlayers[i].url,topPlayers[i])
 			statsStr= statsStr+ stats+ "_"
 			nameStr=nameStr+name+"_"
 			urlStr=urlStr+url.split('&')[0]+"_"
-			nameList.append(name)
-			urlList.append(url)
-			statsList.append(stats)
+			teamPicStr = teamPicStr + teamPic+"_"
 		nameStr=nameStr[:-1]
 		urlStr=urlStr[:-1]
 		statsStr = statsStr[:-1]
-		worstDay,worstName,worstUrl,worstStats=self.loadTopPlayerData(self.playerList[-1].url,self.playerList[-1])
+		teamPicStr = teamPicStr[:-1]
+		worstDay,worstName,worstUrl,worstStats,worstTeamPic=self.loadTopPlayerData(self.playerList[-1].url,self.playerList[-1])
 		self.webPrefix="http://noahn.me"
 		webPathSetPlayer = "/setCurPlayerOfDay?"
-		rval2 = requests.get(self.webPrefix + webPathSetPlayer + "day=" + day + "&message=" + nameStr + "&url=" +  urlStr + "&stats=" + statsStr) 
+		rval2 = requests.get(self.webPrefix + webPathSetPlayer + "day=" + day + "&message=" + nameStr + "&url=" +  urlStr + "&stats=" + statsStr + "&teamPic="+teamPicStr) 
 
 		return
 
 	def loadDayPlayers(self):
 		topPlayer = self.findTopPlayer(1)[0]
-		day,webmessage,url,stats=self.loadTopPlayerData(topPlayer.url,topPlayer)
+		day,webmessage,url,stats,teamPic=self.loadTopPlayerData(topPlayer.url,topPlayer)
 		message = []
 		message.append("    ~ffffe630"+topPlayer.name + " is the player of the day! " + stats)
 		if (utilityObj.hasFinishedBoot):
