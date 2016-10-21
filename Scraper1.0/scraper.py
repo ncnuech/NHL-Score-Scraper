@@ -24,7 +24,10 @@ class Messenger:
 		return
 	def sendMessage(self,message,type):
 		phoneListStr=""
-		phoneListStr = requests.get(self.webPrefixAction + type)
+		try:
+			phoneListStr = requests.get(self.webPrefixAction + type)
+		except requests.exceptions.RequestException as e:
+			return
 		if phoneListStr.text=='':
 			return
 		phoneList = phoneListStr.text.split(' ')
@@ -75,8 +78,11 @@ class Printer:
 		for strComponent in outStr:
 			strComponent=self.prefix+strComponent
 			print(strComponent)
-			rval = requests.get(strComponent)#uncomment
-			rval2 = requests.get(self.webPrefix+outStr[0])
+			try:
+				rval = requests.get(strComponent)#uncomment
+				rval2 = requests.get(self.webPrefix+outStr[0])
+			except:
+				return;
 			if (type=="action"):
 				messengerObj.sendMessage(strComponent,type)
 			time.sleep(15)
@@ -497,8 +503,10 @@ class ESPNSportsObj:
 		worstDay,worstName,worstUrl,worstStats,worstTeamPic=self.loadTopPlayerData(self.playerList[-1].url,self.playerList[-1])
 		self.webPrefix="http://noahn.me"
 		webPathSetPlayer = "/setCurPlayerOfDay?"
-		rval2 = requests.get(self.webPrefix + webPathSetPlayer + "day=" + day + "&message=" + nameStr + "&url=" +  urlStr + "&stats=" + statsStr + "&teamPic="+teamPicStr) 
-
+		try:
+			rval2 = requests.get(self.webPrefix + webPathSetPlayer + "day=" + day + "&message=" + nameStr + "&url=" +  urlStr + "&stats=" + statsStr + "&teamPic="+teamPicStr) 
+		except requests.exceptions.RequestException as e:
+			print("error in curplayerofday");
 		return
 
 	def loadDayPlayers(self):
@@ -512,8 +520,10 @@ class ESPNSportsObj:
 		webPathSetPlayer = "/setPlayerOfDay?"
 		message = topPlayer.name + " is the player of the day! "
 		messengerObj.sendMessage(message,"playerOfDay")
-		rval2 = requests.get(self.webPrefix + webPathSetPlayer + "day=" + day + "&message=" + webmessage + "&url=" +  url + "&stats=" + stats) 
-
+		try:
+			rval2 = requests.get(self.webPrefix + webPathSetPlayer + "day=" + day + "&message=" + webmessage + "&url=" +  url + "&stats=" + stats) 
+		except requests.exceptions.RequestException as e:
+			print("error in loadDayPlayers")
 	
 		return
 	def startDay(self):
@@ -522,10 +532,11 @@ class ESPNSportsObj:
 		self.gameOverCount=0
 		#Retrieve the HTML for ESPN scoreboard
 		printerObj.debugPrint("get request to " + 'http://espn.go.com/nhl/scoreboard?date='+getDateStr())
-
-		page = requests.get('http://espn.go.com/nhl/scoreboard?date='+getDateStr())
+		try:
+			page = requests.get('http://espn.go.com/nhl/scoreboard?date='+getDateStr())
+		except:
+			return;
 		tree = html.fromstring(page.content);
-
 		#Retrieve ids for each game on the current day.
 		#An id is defined by ESPN as a unique numerical identifier for a given game
 		#id is used to more directly access elements of the XML using XPATH
