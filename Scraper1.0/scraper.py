@@ -331,6 +331,7 @@ class ESPNSportsObj:
 	gamesOver = False
 	gameOverCount=0
 	playerList = []
+	anyGameHasStarted = False
 	def __init__(self):
 		self.startDay()
 	def loadGamePlayers(self,game):
@@ -477,7 +478,10 @@ class ESPNSportsObj:
 		self.playerList = sorted(self.playerList, key=lambda Player: Player.score,reverse=True)
 		topPlayers = []
 		for i in range(num):
-			topPlayers.append(self.playerList[i])
+			if (i >= len(self.playerList)):
+				topPlayers.append("")
+			else:
+				topPlayers.append(self.playerList[i])
 		return topPlayers
 
 
@@ -530,6 +534,7 @@ class ESPNSportsObj:
 		self.gameList = []
 		self.gamesOver=False
 		self.gameOverCount=0
+		
 		#Retrieve the HTML for ESPN scoreboard
 		printerObj.debugPrint("get request to " + 'http://espn.go.com/nhl/scoreboard?date='+getDateStr())
 		try:
@@ -620,6 +625,7 @@ class ESPNSportsObj:
 				continue
 			elif (not game.gameStarted):
 				printerObj.debugPrint("Game Just Started")
+				self.anyGameHasStarted=True;
 				game.gameStarted=True
 			elif (not game.gameEnded and (game.gameStatusStr=='Final' or game.gameStatusStr=='Final/OT' or game.gameStatusStr=='Final/SO')):
 				printerObj.debugPrint("Game Just Ended")
@@ -627,6 +633,7 @@ class ESPNSportsObj:
 				if self.gameOverCount==len(self.gameList):
 					self.gamesOver=True
 					utilityObj.readyForPlayerOfDay=True
+					self.anyGameHasStarted=False;
 				if (len(game.gameStatusStr)>5):
 					game.gameStatusStr="F"+ game.gameStatusStr[5:]
 				game.gameEnded = True
@@ -644,11 +651,12 @@ class ESPNSportsObj:
 				#retrieve information about scoring play
 				self.loadGame(game,game.getScoringTeamName(scoringTeam))
 		if not gameHasChanged:
-			self.loadUnfinishedDayPlayers()
 			if not utilityObj.hasFinishedBoot:
 				utilityObj.hasFinishedBoot=True;
 			printerObj.printToBoard(self.printableGameList(),"Summary")
-		
+		if self.anyGameHasStarted:
+			self.loadUnfinishedDayPlayers()
+
 	#given game object for a game
 	#find teams playing, scores, and most recent scoring play
 	def loadGame(self, game,scoringTeamName):
@@ -755,6 +763,7 @@ def main():
 			delay=10
 		if (utilityObj.readyForPlayerOfDay):
 			utilityObj.readyForPlayerOfDay=False
+			self.loadUnfinishedDayPlayers()
 			scoreboard.loadDayPlayers()
 
 	printerObj.debugPrint("ending")
