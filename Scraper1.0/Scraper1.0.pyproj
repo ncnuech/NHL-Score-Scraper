@@ -27,7 +27,28 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Buzzer.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="game.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="League.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Messenger.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Player.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Printer.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="scraper.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Utility.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
