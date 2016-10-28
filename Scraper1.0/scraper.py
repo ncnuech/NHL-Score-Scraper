@@ -87,13 +87,13 @@ class ESPNSportsObj:
 				amountofgame=(minutes+seconds)/60
 				gaa=goalsAllowed/amountofgame
 				if first:
-					if game.awayScore>game.homeScore:
+					if game.awayScore>game.homeScore and game.gameEnded==True:
 						wins=1
 					else:
 						wins=0
 					first = False
 				else:
-					if game.homeScore>game.awayScore:
+					if game.homeScore>game.awayScore and game.gameEnded==True:
 						wins=1
 					else:
 						wins=0
@@ -240,7 +240,7 @@ class ESPNSportsObj:
 		self.webPrefix="http://noahn.me"
 		webPathSetPlayer = "/setPlayerOfDay?"
 		message = topPlayer.name + " is the player of the day! "
-		messengerObj.buildListAndSendMessage(message[0],"playerOfDay")
+		messengerObj.buildListAndSendMessage(message,"playerOfDay")
 		try:
 			rval2 = requests.get(self.webPrefix + webPathSetPlayer + "day=" + day + "&message=" + webmessage + "&url=" +  url + "&stats=" + stats) 
 		except requests.exceptions.RequestException as e:
