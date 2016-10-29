@@ -18,9 +18,8 @@ import logging
 
 import calendar
 
-
-from Utility import programUtilities
 from Game import Game
+from Utility import programUtilities
 from League import League
 from Buzzer import Buzzer
 from Messenger import Messenger
