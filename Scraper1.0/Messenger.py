@@ -22,11 +22,11 @@ class Messenger:
 		messageToSend = message
 		server = smtplib.SMTP("smtp.gmail.com",587)
 		server.starttls()
-		server.login('noahnuechterlein@gmail.com','Felipe12')
+		server.login('nhlscoreticker@gmail.com','nhlmarcopolo')
 		if not phoneList:
 			return;
 		for phone in phoneList:
-			server.sendmail('noahnuechterlein@gmail.com',phone+'@vtext.com',messageToSend)
+			server.sendmail('nhlscoreticker@gmail.com',phone+'@vtext.com',messageToSend)
 		server.quit()
 
 	def getPhoneList(self,type):

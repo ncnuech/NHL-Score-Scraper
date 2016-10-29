@@ -92,8 +92,10 @@ class Game:
 				return;
 			hour=self.gameTime.partition(':')[0]
 			minute=self.gameTime.partition(':')[2]
-			hour=str(int(hour)-1)
 			self.gameStatusInt = int(hour)+int(minute)/60;
+			hour=str(int(hour)-1)
+			if int(hour)<=0:
+				hour=str(12+int(hour))
 			self.gameTime=hour+":"+minute
 		except:
 			self.gameStatusInt = 13;
