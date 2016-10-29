@@ -20,7 +20,7 @@ import calendar
 
 
 from Utility import programUtilities
-from game import Game
+from Game import Game
 from League import League
 from Buzzer import Buzzer
 from Messenger import Messenger

@@ -30,7 +30,7 @@
     <Compile Include="Buzzer.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="game.py">
+    <Compile Include="Game.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="League.py">
