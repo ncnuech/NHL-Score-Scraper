@@ -236,6 +236,7 @@ class ESPNSportsObj:
 		message.append("    ~ffffe630"+topPlayer.name + " is the player of the day! " + stats.replace('^','+'))
 		if (utilityObj.hasFinishedBoot):
 			printerObj.printToBoard(message,"player")
+			time.sleep(15);
 		self.webPrefix="http://noahn.me"
 		webPathSetPlayer = "/setPlayerOfDay?"
 		message = topPlayer.name + " is the player of the day! "
@@ -369,6 +370,7 @@ class ESPNSportsObj:
 			if not utilityObj.hasFinishedBoot:
 				utilityObj.hasFinishedBoot=True;
 			printerObj.printToBoard(self.printableGameList(),"Summary")
+			time.sleep(15);
 		if self.anyGameHasStarted:
 			self.loadUnfinishedDayPlayers()
 
@@ -416,10 +418,12 @@ class ESPNSportsObj:
 		outputList=[]
 		outputList.append(outputString)
 		if (utilityObj.hasFinishedBoot):
-			buzzerObj.startBuzzer(scoringTeamName,leagueObj.teamDict[scoringTeamName]['buzzerFile'])
 			printerObj.printToBoard(outputList,"action")
+			buzzerObj.startBuzzer(scoringTeamName,leagueObj.teamDict[scoringTeamName]['buzzerFile'])
 			textMessage = messengerObj.parseTextFromBoardMessage(shortOutput)
 			messengerObj.buildListAndSendMessage(textMessage,"action")
+			time.sleep(15);
+
 
 
 #retrive the headlines from NHL.com

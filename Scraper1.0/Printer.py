@@ -22,6 +22,7 @@ class Printer:
 			self.lastPrintWasSummary=False
 
 		#while check if done is false, wait some 
+		iteration=0;
 		for strComponent in outStr:
 			strComponent=self.prefix+strComponent
 			print(strComponent)
@@ -31,8 +32,9 @@ class Printer:
 			except:
 				print("error in printToBoard")
 				return;
-
-			time.sleep(15)
+			if iteration >0:
+				time.sleep(15);
+			iteration += 1;
 		print("\n")
 
 
