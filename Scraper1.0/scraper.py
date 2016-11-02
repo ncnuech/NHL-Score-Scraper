@@ -449,7 +449,7 @@ def getDateStr():
 	if int(curTime)<7:
 		yesterday = datetime.date.today() - datetime.timedelta(1)
 		dateStr=yesterday.strftime('%Y%m%d')
-	#dateStr="20161015"
+	#dateStr="20161029"
 	return dateStr
 
 #Main driver for program, runs until shut down.
