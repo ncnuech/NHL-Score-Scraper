@@ -418,8 +418,8 @@ class ESPNSportsObj:
 		outputList=[]
 		outputList.append(outputString)
 		if (utilityObj.hasFinishedBoot):
-			printerObj.printToBoard(outputList,"action")
 			buzzerObj.startBuzzer(scoringTeamName,leagueObj.teamDict[scoringTeamName]['buzzerFile'])
+			printerObj.printToBoard(outputList,"action")
 			textMessage = messengerObj.parseTextFromBoardMessage(shortOutput)
 			messengerObj.buildListAndSendMessage(textMessage,"action")
 			time.sleep(15);
