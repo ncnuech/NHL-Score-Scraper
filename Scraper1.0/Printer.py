@@ -4,7 +4,7 @@ import time
 class Printer:
 	lastPrintWasSummary=False
 
-	prefix="http://10.177.105.138/arduino/text/"
+	prefix="http://10.177.105.137/arduino/text/"
 	webPrefix="http://noahn.me/getMessage?message="
 	brightness="30"
 
@@ -33,6 +33,7 @@ class Printer:
 				print("error in printToBoard")
 				return;
 			if iteration >0:
+				print("printoboardsleep")
 				time.sleep(15);
 			iteration += 1;
 		print("\n")

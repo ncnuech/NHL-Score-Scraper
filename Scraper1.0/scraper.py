@@ -14,8 +14,6 @@ import datetime
 
 import logging
 
-
-
 import calendar
 
 from Game import Game
@@ -236,6 +234,7 @@ class ESPNSportsObj:
 		message.append("    ~ffffe630"+topPlayer.name + " is the player of the day! " + stats.replace('^','+'))
 		if (utilityObj.hasFinishedBoot):
 			printerObj.printToBoard(message,"player")
+			print("loadplayersleep")
 			time.sleep(15);
 		self.webPrefix="http://noahn.me"
 		webPathSetPlayer = "/setPlayerOfDay?"
@@ -370,6 +369,7 @@ class ESPNSportsObj:
 			if not utilityObj.hasFinishedBoot:
 				utilityObj.hasFinishedBoot=True;
 			printerObj.printToBoard(self.printableGameList(),"Summary")
+			print("summary sleep")
 			time.sleep(15);
 		if self.anyGameHasStarted:
 			self.loadUnfinishedDayPlayers()
@@ -422,6 +422,7 @@ class ESPNSportsObj:
 			printerObj.printToBoard(outputList,"action")
 			textMessage = messengerObj.parseTextFromBoardMessage(shortOutput)
 			messengerObj.buildListAndSendMessage(textMessage,"action")
+			print("action sleep")
 			time.sleep(15);
 
 
@@ -453,7 +454,7 @@ def getDateStr():
 	if int(curTime)<7:
 		yesterday = datetime.date.today() - datetime.timedelta(1)
 		dateStr=yesterday.strftime('%Y%m%d')
-	#dateStr="20161029"
+	#dateStr="20161108"
 	return dateStr
 
 #Main driver for program, runs until shut down.
@@ -471,6 +472,7 @@ def main():
 				scoreboard.loadScoreboard()
 			else:
 				ignoreLoad = False;
+			print("main sleep")
 			time.sleep(delay)
 
 			##wait x seconds for next check
